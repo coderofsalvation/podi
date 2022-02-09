@@ -1,0 +1,8 @@
+.test/test describe $0
+
+test -d app && rm -rf app 
+mkdir app
+cd app
+cp ../podmen .
+git init
+./podmen init git@localhost:/home/git/app master 2222 app1

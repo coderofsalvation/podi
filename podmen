@@ -87,7 +87,7 @@ hello(){
 }
 
 
-init(){ # init git@server:/path/to/deployment [branch] [port] : initializes a repository 
+init(){ # init git@server:/dir/to/deploy [branch] [port] [name] : initializes a deployment 
   test -z $1 && usage 
   trigger init_localhost
   trigger init_server "$@"
@@ -106,9 +106,10 @@ init_server(){
   user=$(    echo $1 | awk '{ gsub("@.*","",$0); print $0 }')
   server=$(  echo $1 | awk '{ gsub(".*@","",$0); gsub(":.*","",$0); print $0 }')
   gitpath=$( echo $1 | awk '{ gsub(".*:","",$0); print $0 }')
-  appname=$(basename $gitpath)
+  test -z $4 && appname=$(basename $gitpath) || appname=$4
   test -z $2 && branch=$(git branch | awk '/^\*/ { print $2 }') || branch=$2
   test -z $3 && port=22 || port=$3
+  test -z $4 && gitremote=$appname || gitremote=$4
   test $gitpath = $server && gitpath="$(basename $(pwd))"
   mkdir -p .podmen/$user@$server
   local config=.podmen/$user@$server/$appname/config
@@ -118,12 +119,13 @@ init_server(){
   echo "export user='$user'                          " >> $config
   echo "export gitpath='$gitpath'                    " >> $config
   echo "export appname='$appname'                    " >> $config
+  echo "export branch='$branch'                      " >> $config
   . $config 
   scp -P $port $0 $user@$server:/tmp/. 1>/dev/null
   ssh -p $port $user@$server HOST=$user@$server /tmp/podmen init_gitops $gitpath $server $user $port
   test -d .git || git init
-  git remote | silent grep $server\/$appname || git remote add $server/$appname ssh://$user@$server:$port$gitpath/.git
-  silent git push $server $branch
+  git remote | silent grep $gitremote || git remote add -t $branch $gitremote ssh://$user@$server:$port$gitpath/.git
+  silent git push $server $branch && print "you can now run: git push $user@server:$appname"
   export PM_SERVER=$server 
   export PM_BRANCH=$branch
 }
@@ -137,18 +139,25 @@ init_gitops(){
   chmod +x $1/.git/hooks/post-receive
 }
 
+deploy(){ # deploy <gitremote> <branch> : use local .podmen to trigger deployment (without gitcommit)
+  echo todo
+}
+
 recipe(){ # recipe <name_or_url> : installs a recipe from podmen repo or url
   echo 
 }
 
 usage(){
+  echo "usage: "
   awk '/[a-zA-Z0-9_]+\(\){ #/ { 
     info=$0 
     gsub(".* : ","",info)
     gsub(".*{ # ","",$0)
     gsub(" :.*","",$0)
-    printf("%-55s %s\n",$0,info)
+    printf("    %-55s %s\n",$0,info)
   }' $0 .podmen/* 2>/dev/null
+  printf "\ndeploy targets:\n\n"
+  git remote | awk '{ printf("   %s\n",$1) }'
   exit 0
 }
 

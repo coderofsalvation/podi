@@ -1,0 +1,9 @@
+.test/test describe $0
+
+cd app
+cp ../recipe/rollback.simple .podmen/.
+git add .podmen 
+currentcommit=$(git log -n 1 --format="%h")
+git commit -m "recipe rollback"
+git push app1 master
+./podmen rollback git@localhost app1 $currentcommit

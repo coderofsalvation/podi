@@ -1,0 +1,16 @@
+.test/test describe $0
+
+cd app
+./podmen init git@localhost:/home/git/app2 master 2222 foobar
+cp ../recipe/envfile .podmen/.
+./podmen envset
+git add .podmen .env 
+git commit -m "recipe envfile"
+git push foobar master
+ECHO TODO #1: store remotes in .podman/remotename
+ECHO TODO #2: ./podmen ==> list remotes + add git remotes if not exist 
+exit 1
+#./podmen envset foobar FOO=bar 
+#./podmen envset foobar FOO="flop space"
+#./podmen envset foobar XYZ=1
+#./podmen envset

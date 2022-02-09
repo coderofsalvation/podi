@@ -1,72 +1,22 @@
 #!/bin/sh
 export PATH=$PATH:$(pwd)
+set -e
 
-alias podman=docker
+which podman 2>/dev/null || alias podman=docker
 
 all(){
   podman init
 }
 
-pause(){
-  read -p "press key to continue.." a
-  clear
+describe(){
+  C_NORMAL="\\033[0;0m"; C_CYAN="\\033[1;36m"
+  set +ex
+  printf "\n$C_CYAN##################### %s ######################$C_NORMAL\n\n" "$(basename $1)"
+  set -ex
 }
 
 run(){
-  test -f ~/.ssh/id_rsa_app && rm ~/.ssh/id_rsa_app*
-  test -d app && rm -rf app 
-  podman build ./.test -t podmen 
-  podman rm -f podmen
-  podman run -d -p 2222:22 -e AUTHORIZED_KEYS="$(cat ~/.ssh/*.pub)" -v $(pwd):/podmen -w /home/git --name podmen podmen
-  mkdir app
-  cd app
-  pause
-  set -x
-
-  git init
-  podmen
-  podmen init git@localhost:/home/git/app master 2222
-  pause
-
-  podmen
-  echo "# $(date)" >> .podmen/pipeline
-  git add .podmen podmen && git commit -m "testchange"
-  git push localhost/app master
-  pause
-
-  cp ../recipe/hello .podmen/.
-  git add .podmen && git commit -m "recipe hello"
-  git push localhost/app master
-  pause
-
-  cp ../recipe/rollback.simple .podmen/.
-  git add .podmen 
-  currentcommit=$(git log -n 1 --format="%h")
-  git commit -m "recipe rollback"
-  git push localhost/app master
-  ./podmen rollback git@localhost app $currentcommit
-  pause
-
-  podmen init git@localhost:/home/git/app2 master 2222
-  pause
-
-  cp ../recipe/envfile .podmen/.
-  podmen envset
-  git add .podmen .env 
-  git commit -m "recipe envfile"
-  git push localhost/app2 master
-  podmen envset git@localhost app2 FOO=bar 
-  podmen envset git@localhost app2 FOO="flop space"
-  podmen envset git@localhost app2 XYZ=1
-  podmen envset
-  pause
-  
-  cp ../recipe/sshkey .podmen/.
-  podmen init git@localhost:/home/git/app3 master 2222
-  git add .podmen
-  git commit -m "recipe sshkey"
-  git push localhost/app3 master
-  pause
+  find .test/tests -type f | sort | xargs -n1 bash -c ; echo errors=$PIPESTATUS
 }
 
 "$@"

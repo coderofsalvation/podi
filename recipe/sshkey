@@ -3,14 +3,12 @@
 
 init_sshkey(){
   header sshkey 
-  local key=~/.ssh/id_rsa_${PM_APP}
+  local key=~/.ssh/id_rsa_$appname
   test -f $key && { 
     ssh-keygen -t rsa -N "" -f $key 
-    ssh-key-copy -p $PM_PORT -i $key $PM_USER@$PM_SERVER
+    ssh-key-copy -p $port -i $key $user@$server 
   }
-  print "Yay! now:"
-  print "  1. commit changes and type: 'git push $PM_SERVER $PM_BRANCH'"
-  print "  2. share key '~/.ssh/id_rsa_$PM_APP' to collaborate with devs "
+  print "Yay! share key '~/.ssh/id_rsa_$appname' to collaborate with devs "
 }
 
 on init_server init_sshkey

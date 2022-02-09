@@ -1,0 +1,6 @@
+.test/test describe $0 
+
+cd app
+echo "# $(date)" >> .podmen/pipeline
+git add .podmen podmen && git commit -m "testchange"
+git push app1 master

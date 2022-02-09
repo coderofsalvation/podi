@@ -20,8 +20,7 @@ envset(){ # envset [git@server] [app] [FOO=bar] : shows or sets [remote] environ
     for app in .podmen/*@*/*/config; do 
       . $app
       print "$server:$appname (.env.live):"
-      echo
-      test -z $3 && ssh -p $port $user@$server "test -f $gitpath/.env.live && cat $gitpath/.env.live || echo no env-vars yet" 
+      test -z $3 && ssh -p $port $user@$server "test -f $gitpath/.env.live && cat $gitpath/.env.live || echo '  no env-vars yet'" 
       echo
     done
   fi
