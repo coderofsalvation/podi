@@ -12,3 +12,4 @@ checkout(){
   git checkout -f
 }
 # wo  9 feb 2022 13:02:23 CET
+# wo  9 feb 2022 21:22:22 CET
