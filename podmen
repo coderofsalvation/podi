@@ -1,0 +1,155 @@
+#!/bin/sh
+set -e
+required="awk ssh git hostname basename"
+test -z $HOST && host=$USER@$(hostname) || host=$HOST
+#trap "trigger cleanup" 0 1 2 3 6
+C_GREY="\\033[1;30m"
+C_BOLD="\\033[1;37;40m"
+C_NORMAL="\\033[0;0m"
+C_CYAN="\\033[1;36m"
+C_PURPLE="\\033[38;5;207m"
+C_RED="\\033[0;31m"
+
+# some hipster wrappers to make things readable and sexy later on
+extract()    { awk '/^# '$1':/ { gsub("^# '$1': ","",$0); print $0 }' $0; }
+try()        { set +e; "$@"; set -e;               }
+silent()     { "$@" 1>/dev/null 2>/dev/null;       }
+installed()  { which $1 2>/dev/null 1>/dev/null;   }
+error()      { printf " [$C_RED"e"$C_NORMAL] %s\n" "$*"; exit 1; }
+print()      { printf "  $C_PURPLE|$C_NORMAL %s\n" "$*"; }
+evalfunc()   { type $1 | awk 'NR>2 && /^[^{][^}]/ { print $0 }'; }
+foreach()    { local err=0; local args="$1"; 
+               shift; 
+               for i in $args; do "$@" "$i" || err=1; done
+               test $err = 1 && return 1 || return 0
+             }
+trigger()    { printf "$C_BOLD%-25s $C_NORMAL[$C_CYAN✓$C_NORMAL] ($C_GREY%s)$C_NORMAL\n" "$(test $host = $USER@$(hostname) && printf $1 || printf "  | $1")" $host 1>&2
+               local cmd=$1; shift
+               actions="$(eval echo \$on_$cmd)"
+               if test -n "$actions"; then 
+                 silent type $cmd && $cmd "$@"
+                 for i in $actions; do $i "$@"; done 
+               else 
+                 silent type $cmd || return 0; 
+                 silent type $cmd && $cmd "$@"; 
+               fi 
+             }
+on()         { export on_$1="$2 $(eval echo \$on_$1)"; }
+
+# pipeline: deploy(){
+# pipeline:   trigger hello
+# pipeline:   trigger backup
+# pipeline:   trigger extract 
+# pipeline:   trigger build
+# pipeline:   trigger runtests
+# pipeline:   trigger start
+# pipeline: }
+# pipeline: 
+# pipeline: checkout(){
+# pipeline:   alias git="git --work-tree=$(pwd) --git-dir=$(pwd)/.git"
+# pipeline:   git checkout -f
+# pipeline: }
+
+init_post_receive(){
+  echo "#!/bin/sh
+    export PM_REMOTE=$2
+    export PM_USER=$3
+    export PM_PORT=$4
+    export PM_APP=$(basename $(pwd))
+    export PM_COMMIT=\$(git --work-tree=$1 --git-dir=$1/.git log -n1 --pretty=format:\"%h\")
+    cd $1
+    mkdir .tmp
+    alias git=\"git --work-tree=$1/.tmp --git-dir=$1/.git\"
+    git checkout -f 1>/dev/null 2>/dev/null
+    test -f podmen  && rm podmen
+    test -d .podmen && rm -rf .podmen
+    cp -r .tmp/podmen .tmp/.podmen .
+    rm -rf .tmp
+    test -f podmen && ./podmen deploy 
+  " | awk '{ gsub("^[ ]+","",$0); print $0 }'
+}
+
+loadremote(){
+  cfg=.podmen/$1/config
+  test -f $cfg || error remote $1 does not exist
+  . $cfg
+}
+
+hello(){
+  echo -e '
+\e[38;5;57m                         888                              
+\e[38;5;93m 888 88e   e88 88e   e88 888 888 888 8e   ,e e,  888 8e    
+\e[38;5;129m 888 888b d888 888b d888 888 888 888 88b d88 88b 888 88b   
+\e[38;5;165m 888 888P Y888 888P Y888 888 888 888 888 888   , 888 888   
+\e[38;5;201m 888 88"   "88 88"   "88 888 888 888 888  "YeeP" 888 888   
+\e[38;5;207m 888                                             
+\e[0m'
+}
+
+
+init(){ # init git@yourserver:[port]/path/to/deployment [branch]: initializes a repository 
+  test -z $1 && usage 
+  trigger init_localhost
+  trigger init_server "$@"
+}
+
+init_localhost(){
+  test -d ~/.podmen || { mkdir -p ~/.podmen && extract config   > ~/.podmen/config; }
+  test -d .podmen   || { 
+    mkdir -p .podmen   && extract pipeline > .podmen/pipeline; 
+    test -d   .podmen && for i in .podmen/*  ; do . $i; done 
+  }
+}
+
+init_server(){
+  user=$( echo $1  | awk '{ gsub("@.*","",$0); print $0 }')
+  server=$( echo $1  | awk '{ gsub(".*@","",$0); gsub(":.*","",$0); print $0 }')
+  gitpath=$( echo $1 | awk '{ gsub(".*:","",$0); print $0 }')
+  branch=$(git branch | awk '/^\*/ { print $2 }')
+  test $gitpath = $server && gitpath="$(basename $(pwd))"
+  test -z $2 && port=22 || port=$2
+  mkdir -p .podmen/$user@$server
+  local config=.podmen/$user@$server/config
+  echo "export server='$server'                      " >  $config
+  echo "export port='$port'                          " >> $config
+  echo "export user='$user'                          " >> $config
+  echo "export gitpath='$gitpath'                    " >> $config
+  . $config 
+  scp -P $port $0 $user@$server:/tmp/. 1>/dev/null
+  ssh -p $port $user@$server HOST=$user@$server /tmp/podmen init_gitops $gitpath $server $user $port
+  test -d .git || git init
+  git remote | silent grep $server || git remote add $server ssh://$user@$server:$port$gitpath/.git
+  silent git push $server $branch
+  export PM_SERVER=$server 
+  export PM_BRANCH=$branch
+}
+
+init_gitops(){
+  git --version 1>/dev/null 2>/dev/null || error please install git on $server 
+  test -d $1/.git && printf "already initialized: $C_GREY$1/.git$C_NORMAL\n"
+  mkdir $1 
+  silent git init --bare "$1/.git" || error could not create $1/.git
+  trigger init_post_receive $1 $2 $3 $4 > $1/.git/hooks/post-receive
+  chmod +x $1/.git/hooks/post-receive
+}
+
+recipe(){ # recipe <name_or_url> : installs a recipe from podmen repo or url
+  echo 
+}
+
+usage(){
+  awk '/[a-zA-Z0-9_]+\(\){ #/ { 
+    info=$0 
+    gsub(".* : ","",info)
+    gsub(".*{ # ","",$0)
+    gsub(" :.*","",$0)
+    printf("%-50s %s\n",$0,info)
+  }' $0 .podmen/* 2>/dev/null
+  exit 0
+}
+
+foreach "$required" installed || error "please install: $required" 
+# source external variables, functions and decorators 
+test -d   .podmen && for i in .podmen/*  ; do . $i; done 
+test -z $1 && usage
+trigger "$@"
