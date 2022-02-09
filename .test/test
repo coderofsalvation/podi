@@ -1,0 +1,34 @@
+#!/bin/sh
+export PATH=$PATH:.
+
+all(){
+  podman init
+}
+
+run(){
+  test -d .podmen && rm -rf .podmen
+  test -f ~/.ssh/id_rsa_podmen && rm ~/.ssh/id_rsa_podmen*
+  podman build ./.test -t podmen 
+  podman rm -f podmen
+  podman run -d -p 2222:22 -e AUTHORIZED_KEYS="$(cat ~/.ssh/*.pub)" -v $(pwd):/podmen -w /home/git --name podmen podmen
+  podmen
+  podmen init git@localhost:/home/git/app 2222
+  podmen
+  echo "# $(date)" >> .podmen/pipeline
+  git add .podmen podmen .env && git commit -m "testchange"
+  git push localhost master
+  read -p "press key to continue.." a
+  cp recipe/hello .podmen/.
+  git add .podmen && git commit -m "testchange"
+  git push localhost master
+  read -p "press key to continue.." a
+  cp recipe/envfile .podmen/.
+  git push localhost master
+  podmen envset git@localhost FOO=bar 
+  podmen envset git@localhost FOO="flop space"
+  podmen envset git@localhost XYZ=1
+  podmen envset git@localhost
+  podmen envset
+}
+
+"$@"
