@@ -1,1 +1,1 @@
-> while others are writing kubernetes-optimized javascriptbundlers on a blockchain, some people focus on reducing layers of complexity.
+> some people people write kubernetes-optimized javascriptbundlers using blockchain-technology, some people focus on reducing layers of complexity.

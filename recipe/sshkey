@@ -1,8 +1,8 @@
 # installation : run 'podmen recipe sshkey' or put this file into .podman folder 
 # example usage: ./podman init git@yourserver
 
-on_init_server(){
-  trigger init_server:sshkey
+init_sshkey(){
+  header sshkey 
   local key=~/.ssh/id_rsa_${PM_APP}
   test -f $key && { 
     ssh-keygen -t rsa -N "" -f $key 
@@ -12,3 +12,5 @@ on_init_server(){
   print "  1. commit changes and type: 'git push $PM_SERVER $PM_BRANCH'"
   print "  2. share key '~/.ssh/id_rsa_$PM_APP' to collaborate with devs "
 }
+
+on init_server init_sshkey

@@ -17,6 +17,7 @@ silent()     { "$@" 1>/dev/null 2>/dev/null;       }
 installed()  { which $1 2>/dev/null 1>/dev/null;   }
 error()      { printf " [$C_RED"e"$C_NORMAL] %s\n" "$*"; exit 1; }
 print()      { printf "  $C_PURPLE|$C_NORMAL %s\n" "$*"; }
+header()     { h=$1; shift; printf "  $C_CYAN└($C_NORMAL""%s""$C_CYAN $C_NORMAL%s\n" "$h" "$*"; }
 evalfunc()   { type $1 | awk 'NR>2 && /^[^{][^}]/ { print $0 }'; }
 foreach()    { local err=0; local args="$1"; 
                shift; 
@@ -39,15 +40,14 @@ on()         { export on_$1="$2 $(eval echo \$on_$1)"; }
 # pipeline: deploy(){
 # pipeline:   trigger hello
 # pipeline:   trigger backup
-# pipeline:   trigger extract 
+# pipeline:   trigger checkout 
 # pipeline:   trigger build
 # pipeline:   trigger runtests
 # pipeline:   trigger start
 # pipeline: }
 # pipeline: 
 # pipeline: checkout(){
-# pipeline:   alias git="git --work-tree=$(pwd) --git-dir=$(pwd)/.git"
-# pipeline:   git checkout -f
+# pipeline:   git --work-tree=$(pwd) --git-dir=$(pwd)/.git checkout -f
 # pipeline: }
 
 init_post_receive(){
@@ -70,8 +70,8 @@ init_post_receive(){
 }
 
 loadremote(){
-  cfg=.podmen/$1/config
-  test -f $cfg || error remote $1 does not exist
+  cfg=.podmen/$1/$2/config
+  test -f $cfg || error "remote (.podmen/$1/$2/config) does not exist"
   . $cfg
 }
 
@@ -87,7 +87,7 @@ hello(){
 }
 
 
-init(){ # init git@yourserver:[port]/path/to/deployment [branch]: initializes a repository 
+init(){ # init git@server:/path/to/deployment [branch] [port] : initializes a repository 
   test -z $1 && usage 
   trigger init_localhost
   trigger init_server "$@"
@@ -98,27 +98,31 @@ init_localhost(){
   test -d .podmen   || { 
     mkdir -p .podmen   && extract pipeline > .podmen/pipeline; 
     test -d   .podmen && for i in .podmen/*  ; do . $i; done 
+    test -f podmen || cp $0 .
   }
 }
 
 init_server(){
-  user=$( echo $1  | awk '{ gsub("@.*","",$0); print $0 }')
-  server=$( echo $1  | awk '{ gsub(".*@","",$0); gsub(":.*","",$0); print $0 }')
+  user=$(    echo $1 | awk '{ gsub("@.*","",$0); print $0 }')
+  server=$(  echo $1 | awk '{ gsub(".*@","",$0); gsub(":.*","",$0); print $0 }')
   gitpath=$( echo $1 | awk '{ gsub(".*:","",$0); print $0 }')
-  branch=$(git branch | awk '/^\*/ { print $2 }')
+  appname=$(basename $gitpath)
+  test -z $2 && branch=$(git branch | awk '/^\*/ { print $2 }') || branch=$2
+  test -z $3 && port=22 || port=$3
   test $gitpath = $server && gitpath="$(basename $(pwd))"
-  test -z $2 && port=22 || port=$2
   mkdir -p .podmen/$user@$server
-  local config=.podmen/$user@$server/config
+  local config=.podmen/$user@$server/$appname/config
+  mkdir -p $(dirname $config)
   echo "export server='$server'                      " >  $config
   echo "export port='$port'                          " >> $config
   echo "export user='$user'                          " >> $config
   echo "export gitpath='$gitpath'                    " >> $config
+  echo "export appname='$appname'                    " >> $config
   . $config 
   scp -P $port $0 $user@$server:/tmp/. 1>/dev/null
   ssh -p $port $user@$server HOST=$user@$server /tmp/podmen init_gitops $gitpath $server $user $port
   test -d .git || git init
-  git remote | silent grep $server || git remote add $server ssh://$user@$server:$port$gitpath/.git
+  git remote | silent grep $server\/$appname || git remote add $server/$appname ssh://$user@$server:$port$gitpath/.git
   silent git push $server $branch
   export PM_SERVER=$server 
   export PM_BRANCH=$branch
@@ -143,7 +147,7 @@ usage(){
     gsub(".* : ","",info)
     gsub(".*{ # ","",$0)
     gsub(" :.*","",$0)
-    printf("%-50s %s\n",$0,info)
+    printf("%-55s %s\n",$0,info)
   }' $0 .podmen/* 2>/dev/null
   exit 0
 }

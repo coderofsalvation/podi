@@ -1,7 +1,7 @@
 # a barebones recipe
 
-hello(){ echo ' \o/ hello' ; }
-world(){ echo '     world' ; }
+hello(){ header myrecipe;  }
+world(){ print helloworld; }
 
 mycmd(){ # mycmd [myopt] : simple example cmd 
   echo "howdy! $1"
