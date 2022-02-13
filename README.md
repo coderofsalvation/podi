@@ -7,7 +7,6 @@
 $ cd myapp
 $ git init
 $ podi init git@myserver:/dir/to/deploy
-.pod dir created
 $ git push git@myserver
 # PROFIT!
 ```
