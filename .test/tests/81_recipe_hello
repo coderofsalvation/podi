@@ -1,6 +1,6 @@
 .test/test describe $0
 
 cd app
-cp ../recipe/hello .podmen/.
-git add .podmen && git commit -m "recipe hello"
+cp ../recipe/hello .pod/.
+git add .pod && git commit -m "recipe hello"
 git push app1 master

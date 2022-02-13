@@ -12,4 +12,4 @@ RUN apk update \
 RUN echo "git:git" | chpasswd
 RUN chown -R git:git /home/git
 
-CMD ["/podmen/.test/docker-entrypoint.sh"]
+CMD ["/podi/.test/docker-entrypoint.sh"]

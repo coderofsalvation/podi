@@ -1,6 +1,6 @@
 .test/test describe $0
 
 set +x
-podman build ./.test -t podmen 
-podman rm -f podmen
-podman run -d -p 2222:22 -e AUTHORIZED_KEYS="$(cat ~/.ssh/*.pub)" -v $(pwd):/podmen -w /home/git --name podmen podmen
+podman build ./.test -t podi 
+podman rm -f podi
+podman run -d -p 2222:22 -e AUTHORIZED_KEYS="$(cat ~/.ssh/*.pub)" -v $(pwd):/podi -w /home/git --name podi podi
