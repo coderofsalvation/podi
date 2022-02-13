@@ -1,5 +1,7 @@
 > remove layers of complexity.
 
+![](./doc/demo1.svg)
+
 
 ## Usage
 
