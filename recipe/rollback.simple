@@ -1,11 +1,12 @@
-# installation : run 'podmen recipe rollback.simple' or put this file into .podman folder 
+# info:          perform easy server-rollbacks based on gitcommit
+# installation:  run 'podi recipe rollback.simple' or put this file into .podman folder 
 # example usage: ./podman rollback git@server 3fe2f615
 
 checkout(){
   header rollback.simple 
   test -z $ROLLBACK && {
     git --work-tree=$(pwd) --git-dir=$(pwd)/.git checkout -f
-    print usage: ./podmen rollback $USER@$PM_REMOTE $PM_APP $PM_COMMIT 
+    print usage: ./podi rollback $USER@$PM_REMOTE $PM_APP $PM_COMMIT 
   }
   test -z $ROLLBACK || trigger do_rollback
 }
@@ -17,7 +18,7 @@ do_rollback(){
 rollback(){ # rollback <user@remote> <app> <commit> : rolls back deployment to certain commit
   loadremote $1 $2
   scp -P $port $0 $user@$server:/tmp/. 1>/dev/null
-  ssh -p $port $user@$server "export HOST=$user@$server; export ROLLBACK=$3; cd $gitpath; ./podmen deploy"
+  ssh -p $port $user@$server "export HOST=$user@$server; export ROLLBACK=$3; cd $gitpath; ./podi deploy"
 }
 
 on extract checkout_or_rollback

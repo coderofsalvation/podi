@@ -1,4 +1,5 @@
-# installation : run 'podmen recipe sshkey' or put this file into .podman folder 
+# info:          generates sshkey to be shared with external developers
+# installation : run 'podi recipe sshkey' or put this file into .podman folder 
 # example usage: ./podman init git@yourserver
 
 init_sshkey(){

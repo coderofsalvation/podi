@@ -2,6 +2,7 @@
 set -e
 required="awk ssh git hostname basename"
 test -z $HOST && host=$USER@$(hostname) || host=$HOST
+RECIPE_REPOS="https://raw.githubusercontent.com/coderofsalvation/podi/master/recipe/.index.txt"
 #trap "trigger cleanup" 0 1 2 3 6
 C_GREY="\\033[1;30m"
 C_BOLD="\\033[1;37;40m"
@@ -61,31 +62,33 @@ init_post_receive(){
     mkdir .tmp
     alias git=\"git --work-tree=$1/.tmp --git-dir=$1/.git\"
     git checkout -f 1>/dev/null 2>/dev/null
-    test -f podmen  && rm podmen
-    test -d .podmen && rm -rf .podmen
-    cp -r .tmp/podmen .tmp/.podmen .
+    test -f podi  && rm podi
+    test -d .pod && rm -rf .pod
+    cp -r .tmp/podi .tmp/.pod .
     rm -rf .tmp
-    test -f podmen && ./podmen deploy 
+    test -f podi && ./podi deploy 
   " | awk '{ gsub("^[ ]+","",$0); print $0 }'
 }
 
 loadremote(){
-  cfg=.podmen/$1/$2/config
-  test -f $cfg || error "remote (.podmen/$1/$2/config) does not exist"
+  cfg=.pod/$1/$2/config
+  test -f $cfg || error "remote (.pod/$1/$2/config) does not exist"
   . $cfg
 }
 
 hello(){
   echo -e '
-\e[38;5;57m                         888                              
-\e[38;5;93m 888 88e   e88 88e   e88 888 888 888 8e   ,e e,  888 8e    
-\e[38;5;129m 888 888b d888 888b d888 888 888 888 88b d88 88b 888 88b   
-\e[38;5;165m 888 888P Y888 888P Y888 888 888 888 888 888   , 888 888   
-\e[38;5;201m 888 88"   "88 88"   "88 888 888 888 888  "YeeP" 888 888   
-\e[38;5;207m 888                                             
+\e[38;5;57m                                     88  88  
+\e[38;5;93m                                     88      
+\e[38;5;129m  8b,dPPYba,    ,adPPYba,    ,adPPYb,88  88  
+\e[38;5;165m  88P`    "8a  a8"     "8a  a8"    `Y88  88  
+\e[0m  88       d8  8b       d8  8b       88  88  
+\e[38;5;201m  88b,   ,a8"  "8a,   ,a8"  "8a,   ,d88  88  
+\e[38;5;201m  88`YbbdP"`    `"YbbdP"`    `"8bbdP"Y8  88  
+\e[38;5;205m  88                                         
+\e[38;5;207m  88                                         
 \e[0m'
 }
-
 
 init(){ # init git@server:/dir/to/deploy [branch] [port] [name] : initializes a deployment 
   test -z $1 && usage 
@@ -94,11 +97,11 @@ init(){ # init git@server:/dir/to/deploy [branch] [port] [name] : initializes a 
 }
 
 init_localhost(){
-  test -d ~/.podmen || { mkdir -p ~/.podmen && extract config   > ~/.podmen/config; }
-  test -d .podmen   || { 
-    mkdir -p .podmen   && extract pipeline > .podmen/pipeline; 
-    test -d   .podmen && for i in .podmen/*  ; do . $i; done 
-    test -f podmen || cp $0 .
+  test -d ~/.pod || { mkdir -p ~/.pod && extract config   > ~/.pod/config; }
+  test -d .pod   || { 
+    mkdir -p .pod   && extract pipeline > .pod/pipeline; 
+    test -d   .pod && for i in .pod/*  ; do . $i; done 
+    test -f podi || cp $0 .
   }
 }
 
@@ -111,8 +114,8 @@ init_server(){
   test -z $3 && port=22 || port=$3
   test -z $4 && gitremote=$appname || gitremote=$4
   test $gitpath = $server && gitpath="$(basename $(pwd))"
-  mkdir -p .podmen/$user@$server
-  local config=.podmen/$user@$server/$appname/config
+  mkdir -p .pod/$user@$server
+  local config=.pod/$user@$server/$appname/config
   mkdir -p $(dirname $config)
   echo "export server='$server'                      " >  $config
   echo "export port='$port'                          " >> $config
@@ -122,7 +125,7 @@ init_server(){
   echo "export branch='$branch'                      " >> $config
   . $config 
   scp -P $port $0 $user@$server:/tmp/. 1>/dev/null
-  ssh -p $port $user@$server HOST=$user@$server /tmp/podmen init_gitops $gitpath $server $user $port
+  ssh -p $port $user@$server HOST=$user@$server /tmp/podi init_gitops $gitpath $server $user $port
   test -d .git || git init
   git remote | silent grep $gitremote || git remote add -t $branch $gitremote ssh://$user@$server:$port$gitpath/.git
   silent git push $server $branch && print "you can now run: git push $user@server:$appname"
@@ -139,12 +142,15 @@ init_gitops(){
   chmod +x $1/.git/hooks/post-receive
 }
 
-deploy(){ # deploy <gitremote> <branch> : use local .podmen to trigger deployment (without gitcommit)
-  echo todo
-}
-
-recipe(){ # recipe <name_or_url> : installs a recipe from podmen repo or url
-  echo 
+recipe(){ # recipe <name_or_url> : installs a recipe from podi repo or url
+  list(){
+    for repo in $RECIPE_REPOS; do 
+      print $(dirname $repo)
+      curl $repo
+    done
+  }
+  test -z $1 && list
+  "$@"
 }
 
 usage(){
@@ -155,7 +161,7 @@ usage(){
     gsub(".*{ # ","",$0)
     gsub(" :.*","",$0)
     printf("    %-55s %s\n",$0,info)
-  }' $0 .podmen/* 2>/dev/null
+  }' $0 .pod/* 2>/dev/null
   printf "\ndeploy targets:\n\n"
   git remote | awk '{ printf("   %s\n",$1) }'
   exit 0
@@ -163,6 +169,6 @@ usage(){
 
 foreach "$required" installed || error "please install: $required" 
 # source external variables, functions and decorators 
-test -d   .podmen && for i in .podmen/*  ; do . $i; done 
+test -d   .pod && for i in .pod/*  ; do . $i; done 
 test -z $1 && usage
 trigger "$@"

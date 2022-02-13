@@ -1,4 +1,4 @@
-# a barebones recipe
+# info: a barebones recipe (startingpoint for own recipe)
 
 hello(){ header myrecipe;  }
 world(){ print helloworld; }
