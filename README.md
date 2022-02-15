@@ -1,7 +1,10 @@
 > remove layers of complexity.
 
-![](./doc/demo1.svg)
+![](./doc/intro.svg)
 
+## Create recipes
+
+![](./doc/extend.svg)
 
 ## Usage
 

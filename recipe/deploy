@@ -1,7 +1,0 @@
-# description: trigger deployment without gitcommit (just execute .pod)
-# installation : run 'podi recipe deploy' or put this file into .podman folder 
-# example usage: ./podman deploy
-
-deploy(){ # deploy <gitremote> <branch> : use local .pod to trigger deployment (without gitcommit)
-  echo todo
-}

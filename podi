@@ -129,16 +129,17 @@ init_server(){
   ssh -p $port $user@$server HOST=$user@$server /tmp/podi init_gitops $gitpath $server $user $port
   test -d .git || git init
   git remote | silent grep $gitremote || git remote add -t $branch $gitremote ssh://$user@$server:$port$gitpath/.git
-  silent git push $server $branch && print "you can now run: git push $user@server:$appname"
+  silent git push $gitremote $branch 
+  header "you can now run: git push $gitremote $branch"
   export PM_SERVER=$server 
   export PM_BRANCH=$branch
 }
 
 init_gitops(){
   git --version 1>/dev/null 2>/dev/null || error please install git on $server 
+  test -d $1 || mkdir $1
   test -d $1/.git && printf "already initialized: $C_GREY$1/.git$C_NORMAL\n"
-  test -d $1 || {
-    mkdir $1 
+  test -d $1/.git || {
     silent git init --bare "$1/.git" || error could not create $1/.git
   }
   trigger init_post_receive $1 $2 $3 $4 > $1/.git/hooks/post-receive
