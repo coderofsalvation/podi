@@ -2,11 +2,7 @@
 
 ![](./doc/intro.svg)
 
-## Create recipes
-
-![](./doc/extend.svg)
-
-## Usage
+> Usage:
 
 ```
 $ cd myapp
@@ -15,6 +11,9 @@ $ podi init git@myserver:/dir/to/deploy
 $ git push git@myserver
 # PROFIT!
 ```
+## Create recipes
+
+![](./doc/extend.svg)
 
 ## Install
 
