@@ -1,3 +1,6 @@
 "TODO","feature",".podman/git@localhost/app => .podman/git@srv/app/config","T","2022-02-09@17:59"
 "TODO","feat","commitmsg env 'FOO=1'","T","2022-02-10@11:09"
 "TODO","feat","nginx as root-user","T","2022-02-10@11:09"
+"TODO","feta","jail recipe => init + prompt jail user?","T","2022-02-18@12:38"
+"TODO","feat","recipe/monitor (tmux)","T","2022-02-18@12:45"
+"TODO","feat","podi admin root .bashrc (machinectl)","T","2022-02-18@12:46"
