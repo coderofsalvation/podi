@@ -1,5 +1,5 @@
 # info:          sources environment variables from `.env` file during deployment
-# installation : run 'podi recipe env-file' or put this file into .podman folder 
+# installation : run 'podi recipe env-file' or put this file into .podi folder 
 # example usage: * put an .env file in your repo (with 'export FOO=1' e.g.)
 #                * override them on remote-server using './podi .env git@server FOO=2'
 #                * run './podi .env' to see all local/remote env-vars 
