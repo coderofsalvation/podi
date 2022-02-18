@@ -126,7 +126,7 @@ init_server(){
   echo "export branch='$branch'                      " >> $config
   . $config 
   scp -P $port $0 $user@$server:/tmp/. 1>/dev/null
-  ssh -p $port $user@$server HOST=$user@$server /tmp/podi init_gitops $gitpath $server $user $port
+  ssh i-t -p $port $user@$server HOST=$user@$server /tmp/podi init_gitops $gitpath $server $user $port
   test -d .git || git init
   git remote | silent grep $gitremote || git remote add -t $branch $gitremote ssh://$user@$server:$port$gitpath/.git
   silent git push $gitremote $branch 
@@ -144,6 +144,11 @@ init_gitops(){
   }
   trigger init_post_receive $1 $2 $3 $4 > $1/.git/hooks/post-receive
   chmod +x $1/.git/hooks/post-receive
+  silent which docker && ALIAS="alias docker=podman"
+  test -z $oci || read -p "> setup jail? (ssh into temporary container) [y/n] " jail
+  test "$jail" == "y" && {
+    echo "$ALIAS\npodman run -it -v /home/$u:/home/$u -w /home/$u alpine:latest /bin/sh" > ~/.profile
+  }
 }
 
 recipe(){ # recipe <name_or_url> : installs a recipe from podi repo or url
