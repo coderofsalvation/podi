@@ -1,1 +1,1 @@
-echo "PID=$(cat .pid) => $(date) PORT=$PORT"
+echo "PID=$(cat .pid) => $(date) PORT=$PORT !!!!"
