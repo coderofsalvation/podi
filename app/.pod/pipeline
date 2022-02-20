@@ -1,0 +1,12 @@
+deploy(){
+  trigger hello
+  trigger backup
+  trigger checkout 
+  trigger build
+  trigger runtests
+  trigger start
+}
+
+checkout(){
+  git --work-tree=$(pwd) --git-dir=$(pwd)/.git checkout -f
+}

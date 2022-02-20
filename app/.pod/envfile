@@ -1,0 +1,30 @@
+# info:          sources environment variables from `.env` file during deployment
+# installation : run 'podi recipe env-file' or put this file into .podi folder 
+# example usage: * put an .env file in your repo (with 'export FOO=1' e.g.)
+#                * override them on remote-server using './podi .env git@server FOO=2'
+#                * run './podi .env' to see all local/remote env-vars 
+
+envfile(){
+  header .pod/envfile
+  print "usage: ./podi envset [git@server] [app] [FOO=bar]"
+  test -f .env      && print "reading  '.env'"               && . .env
+  test -f .env.live && print "override '.env' << .env.live"  && . .env.live
+}
+
+envset(){ # envset [git@server] [app] [FOO=bar] : shows or sets [remote] environment variables
+  test -f .env || echo 'export FOO=bar    # used for development' > .env
+  if test -n "$3"; then 
+    loadremote $1 $2
+    printf "export %-40s # $(date)\n" "$3\"" | awk '{ gsub("=","=\"",$0); print $0; }' | ssh -p $port $1 "cat >> $gitpath/.env.live"
+    print OK
+  else
+    for app in .pod/*@*/*/config; do 
+      . $app
+      print "$server:$appname (.env.live):"
+      test -z $3 && ssh -p $port $user@$server "test -f $gitpath/.env.live && cat $gitpath/.env.live || echo '  no env-vars yet'" 
+      echo
+    done
+  fi
+}
+
+on checkout envfile 

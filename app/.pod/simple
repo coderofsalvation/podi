@@ -1,0 +1,24 @@
+#!/bin/sh
+
+create_app_simple(){
+  header ".pod/app_simple"
+  test -f app || {
+    print "writing app"
+    echo 'echo "PID=$(cat .pid) => $(date) PORT=$PORT"' > app
+    chmod 755 app
+    print "writing .env"
+    PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')
+    echo 'export APP="./app"'   > .env
+    echo 'export PORT='$PORT   >> .env
+  }
+}
+
+start(){
+  . .env
+  test -f .pid  && { print "stopping app5"; silent try kill -15 $(cat .pid); }
+  nohup ./podi daemonize ${APP} $PM_APP $PORT &> app.log &
+  echo $! > .pid
+  print "started: $APP [PID $(cat .pid)]"
+}
+
+on init_localhost create_app_simple
