@@ -1,7 +1,0 @@
-daemonize(){
-  while sleep 1s; do 
-    set +e
-    ${APP}
-    echo "$(tail -n200 app.log)" > app.log
-  done
-}

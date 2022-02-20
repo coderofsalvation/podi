@@ -1,5 +1,0 @@
-export server='localhost'                      
-export port='2222'                          
-export user='git'                          
-export gitpath='/home/git/app3'                    
-export appname='app3'                    
