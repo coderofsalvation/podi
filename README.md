@@ -2,7 +2,7 @@
 
 ![](./doc/intro.svg)
 
-> Usage:
+## Usage
 
 ```
 $ cd myapp 
