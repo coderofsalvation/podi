@@ -1,19 +1,20 @@
-# info:          sources environment variables from `.env` file during deployment
+# info:          runs app/ssh-sessions in oci container using docker or podman 
 # installation : run 'podi recipe env-file' or put this file into .podi folder 
 # example usage: * put an .env file in your repo (with 'export FOO=1' e.g.)
 #                * [IMAGE=alpine] ./podi init git@server:/dir/to/deploy [branch] [port] [name] 
 #                *  automatic ssh-into-container (docker/podman) is now enabled
 
 jail(){ 
-  header .pod/jail 
-  print "initing automatic ssh-into-container $ALPINE"
+  header .pod/start/containerize 
+  print "initing automatic ssh-into-container"
+  print "writing ~/.profile"
   install(){
     script='
       u=$(whoami)
-      test -z $IMAGE && IMAGE=alpine
+      test -z $JAIL_IMAGE && JAIL_IMAGE=busybox
       test $u = "root" || {
         oci=$(which podman || which docker)
-        $oci run -it -v /home/$u:/home/$u -w /home/$u $IMAGE /bin/sh
+        $oci run -it -v /home/$u:/home/$u -w /home/$u $JAIL_IMAGE /bin/sh
         exit
       }
     '
@@ -22,4 +23,3 @@ jail(){
   install > ~/.profile
 }
 
-on init_gitops jail

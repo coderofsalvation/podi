@@ -5,12 +5,17 @@
 > Usage:
 
 ```
-$ cd myapp
-$ git init
-$ podi init git@myserver:/dir/to/deploy
-$ git push git@myserver
-# PROFIT!
+$ cd myapp 
+$ wget "https://raw.githubusercontent.com/coderofsalvation/podi/master/podi"
+$ chmod 755 podi
+$ ./podi recipe app/container
+$ ./podi recipe start/envfile
 ```
+
+> PROFIT! this will enable this heroku-ish workflow:
+
+![](./doc/workflow.jpg)
+
 ## Create recipes
 
 ![](./doc/extend.svg)

@@ -3,7 +3,7 @@
 # example usage: ./podman rollback git@server 3fe2f615
 
 checkout(){
-  header rollback.simple 
+  header .pod/extract/rollback_simple 
   test -z $ROLLBACK && {
     git --work-tree=$(pwd) --git-dir=$(pwd)/.git checkout -f
   }

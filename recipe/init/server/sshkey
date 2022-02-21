@@ -3,7 +3,7 @@
 # example usage: ./podman init git@yourserver
 
 init_sshkey(){
-  header .pod/sshkey 
+  header .pod/init/server/sshkey 
   local key=~/.ssh/id_rsa_$appname
   test -f $key && { 
     ssh-keygen -t rsa -N "" -f $key 

@@ -6,8 +6,8 @@
 
 envfile(){
   header .pod/envfile
-  test -f .env      && print "reading  '.env'"       && . .env
-  test -f .env.live && print "reading  '.env.live'"  && . .env.live
+  test -f .env      && { print "reading  '.env'"     ; . .env;      }
+  test -f .env.live && { print "reading  '.env.live'"; . .env.live; }
 }
 
 envset(){ # envset [git@server] [app] [FOO=bar] : shows or sets [remote] environment variables
