@@ -12,7 +12,7 @@ $ ./podi recipe app/container
 $ ./podi recipe start/envfile
 ```
 
-> PROFIT! now init your (ssh)server to enable this heroku-ish workflow:
+> PROFIT! now init your (ssh)server to enable a heroku-ish workflow:
 
 ![](./doc/workflow.jpg)
 
