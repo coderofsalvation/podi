@@ -2,7 +2,7 @@
 
 test -f ~/.ssh/id_rsa_app && rm ~/.ssh/id_rsa_app*
 cd app
-cp ../recipe/sshkey .pod/.
+cp ../recipe/init/server/sshkey .pod/.
 ./podi init git@localhost:/home/git/app3 master 2222
 git add .pod
 git commit -m "recipe sshkey"

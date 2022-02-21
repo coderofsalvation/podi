@@ -1,16 +1,19 @@
 .test/test describe $0
 
+set -x
 cd app
-./podi init git@localhost:/home/git/app2 master 2222 foobar
-cp ../recipe/envfile .pod/.
+./podi init git@localhost:/home/git/app2 master 2222
+git remote -v
+cp ../recipe/start/envfile .pod/.
 ./podi envset
-git add .pod .env 
+git add .pod .env podi
 git commit -m "recipe envfile"
-git push foobar master
+git remote -v
+git push app2 master
 ECHO TODO #1: store remotes in .podman/remotename
 ECHO TODO #2: ./podi ==> list remotes + add git remotes if not exist 
 exit 1
-#./podi envset foobar FOO=bar 
-#./podi envset foobar FOO="flop space"
-#./podi envset foobar XYZ=1
+#./podi envset app2 FOO=bar 
+#./podi envset app2 FOO="flop space"
+#./podi envset app2 XYZ=1
 #./podi envset

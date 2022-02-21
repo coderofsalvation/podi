@@ -4,16 +4,15 @@
 #                * override them on remote-server using './podi .env git@server FOO=2'
 #                * run './podi .env' to see all local/remote env-vars 
 
-recipe_envfile(){
+envfile(){
   header .pod/envfile
-  test -f .env      && print "reading  '.env'"               && . .env
-  test -f .env.live && print "override '.env' << .env.live"  && . .env.live
-  print PORT=$PORT
+  test -f .env      && print "reading  '.env'"       && . .env
+  test -f .env.live && print "reading  '.env.live'"  && . .env.live
 }
 
 envset(){ # envset [git@server] [app] [FOO=bar] : shows or sets [remote] environment variables
   test -f .env || echo 'export FOO=bar    # used for development' > .env
-  if ! test -z "$3"; then 
+  if test -n "$3"; then 
     loadremote $1 $2
     printf "export %-40s # $(date)\n" "$3\"" | awk '{ gsub("=","=\"",$0); print $0; }' | ssh -p $port $1 "cat >> $gitpath/.env.live"
     print OK
@@ -27,4 +26,4 @@ envset(){ # envset [git@server] [app] [FOO=bar] : shows or sets [remote] environ
   fi
 }
 
-on start recipe_envfile 
+on checkout envfile 

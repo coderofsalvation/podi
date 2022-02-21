@@ -6,7 +6,6 @@ checkout(){
   header rollback.simple 
   test -z $ROLLBACK && {
     git --work-tree=$(pwd) --git-dir=$(pwd)/.git checkout -f
-    print usage: ./podi rollback $USER@$PM_REMOTE $PM_APP $PM_COMMIT 
   }
   test -z $ROLLBACK || trigger do_rollback
 }

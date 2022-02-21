@@ -1,0 +1,15 @@
+.test/test describe $0
+
+test -d app && rm -rf app
+mkdir app
+cd app
+cp ../podi .
+./podi init_localhost
+cp ../recipe/app/simple .pod/.
+cp ../recipe/start/daemonize_simple .pod/.
+cp ../recipe/start/envfile .pod/.
+./podi init git@localhost:/home/git/app5 master 2222
+./podi envset git@localhost app5 PORT=9000
+git add .pod app .env
+git commit -m "recipe app/simple"
+git push app5 master

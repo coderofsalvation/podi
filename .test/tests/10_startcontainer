@@ -3,4 +3,4 @@
 set +x
 podman build ./.test -t podi 
 podman rm -f podi
-podman run -d -p 2222:22 -e AUTHORIZED_KEYS="$(cat ~/.ssh/*.pub)" -v $(pwd):/podi -w /home/git --name podi podi
+podman run -d -p 2222:22 -p 9999:9999 -e AUTHORIZED_KEYS="$(cat ~/.ssh/*.pub)" -v $(pwd):/podi -w /home/git --name podi podi

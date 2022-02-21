@@ -1,0 +1,12 @@
+daemonize(){
+  while sleep 1s; do 
+    set +e
+    TTL=3600     # send SIGTERM after 3 hours 
+    echo starting
+    timeout 2>&1 | silent grep BusyBox && TTL="-t $TTL"
+    timeout -s 15 ${TTL} ${APP}
+    echo "$(tail -n200 app.log)" > app.log
+    echo sleeping on port $PORT
+    echo "HTTP/1.1 302 OK\nrefresh:1;url=/\n\n" | nc -lp $PORT 
+  done
+}

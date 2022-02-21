@@ -1,0 +1,10 @@
+.test/test describe $0
+
+test -f ~/.ssh/id_rsa_app && rm ~/.ssh/id_rsa_app*
+cd app
+cp ../recipe/init/gitops/jail .pod/.
+git add .pod
+git commit -m "recipe jail"
+./podi init git@localhost:/home/git/app4 master 2222
+ssh -p 2222 git@localhost cat /etc/issue | grep Alpine || { echo "jail not working"; exit 1; }
+
