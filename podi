@@ -129,10 +129,11 @@ init_server(){
   ssh -p $port $user@$server HOST=$user@$server mkdir $gitpath
   scp -r -P $port $0 .pod $user@$server:$gitpath/. 1>/dev/null
   try ssh -p $port $user@$server "cd $gitpath; ./podi init_gitops $gitpath $server $user $port"
+  set +e
   test -d .git || git init
-  git remote | silent grep $appname || git remote add -t $branch $appname ssh://$user@$server:$port$gitpath/.git
+  init_remotes 
   silent git push $appname $branch 
-  print "you can now run: git push $gitremote $branch"
+  print "you can now run: git push $appname $branch"
   export PODI_SERVER=$server 
   export PODI_BRANCH=$branch
 }
@@ -172,6 +173,16 @@ recipe(){ # recipe <name_or_url> : installs a recipe from podi repo or url
   test -z $1 || install $1
 }
 
+init_remotes(){
+  for config in .pod/*@*/*/config; do 
+    . $config
+    git remote | silent grep $appname || {
+      header "adding git remote: $appname"
+      git remote add -t $branch $appname ssh://$user@$server:$port$gitpath/.git
+    }
+  done
+}
+
 usage(){
   echo "usage: "
   awk '/[a-zA-Z0-9_]+\(\){ #/ { 
@@ -181,7 +192,9 @@ usage(){
     gsub(" :.*","",$0)
     printf("    %-55s %s\n",$0,info)
   }' $0 .pod/* 2>/dev/null
-  printf "\ndeploy targets:\n"
+  echo 
+  init_remotes
+  printf "deploy targets:\n"
   git remote | awk '{ printf("   %s\n",$1) }'
   exit 0
 }
