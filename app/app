@@ -1,0 +1,2 @@
+PID=$(cat .pid) => $(date) PORT=$PORT
+while sleep 1; do printf .; done 
