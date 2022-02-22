@@ -37,6 +37,7 @@ run_yaml()   { awk '
 trigger()    { printf "$C_NORMAL [$C_CYAN✓$C_NORMAL] $C_BOLD%s$C_NORMAL\n" "$1"
                local cmd=$1; shift
                local actions="$(eval echo \$on_$cmd)"
+               set +e
                if test -n "$actions"; then 
                  silent try type $cmd && { $cmd "$@"; }
                  for it in $actions; do trigger $it "$@"; done 
@@ -44,6 +45,7 @@ trigger()    { printf "$C_NORMAL [$C_CYAN✓$C_NORMAL] $C_BOLD%s$C_NORMAL\n" "$1
                  silent type $cmd || return 0; 
                  silent type $cmd && $cmd "$@"; 
                fi 
+               set -e
                return $?
              }
 on()         { export on_$1="$2 $(eval echo \$on_$1)"; }
@@ -99,13 +101,13 @@ init_localhost(){
   test -d .git || git init
   test -f .pod/pipeline   || { 
     test -d .pod || mkdir -p .pod
+    test -f .pod/pipeline || recipe pipeline
     test -d .pod/run || {
       prompt "how to run this app?" "$(recipe | grep '^run/' | cat -n)" 
       runtime=$(recipe | grep '^run/' | awk "NR == $answer { print \$0 }")
       silent recipe $runtime && . .pod/$runtime
       init_runtime
     }
-    test -f .pod/pipeline || recipe pipeline
     test -d .pod && for i in .pod/*  ; do . $i; done 
     test -f podi || cp $0 .
   }
@@ -187,6 +189,7 @@ init_remotes(){
 }
 
 usage(){
+  test -d .git && silent grep "bare = true" .git/config && error "dont use podi on production server" 
   echo "usage: "
   awk '/[a-zA-Z0-9_]+\(\){ #/ { 
     info=$0 

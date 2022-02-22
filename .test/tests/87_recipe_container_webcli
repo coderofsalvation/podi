@@ -1,19 +1,17 @@
 .test/test describe $0
 
-HOST=git@server.app.isvery.ninja
+test -z $HOST && { echo "ERROR: please provide docker-server using HOST=git@localhost e.g."; exit; }
 GITPATH=/home/git/test
-PORT=222
-set -x
 ssh -p $PORT $HOST rm -rf /home/git/test 
 test -d app && rm -rf app
 mkdir app
 cd app
 cp ../podi .
 export RECIPE_REPOS=http://localhost:8081/recipe/index.txt 
-./podi recipe run/container_autosuspend
+./podi recipe run/container_webcli
 ./podi init_runtime
 ./podi init $HOST:$GITPATH master $PORT
-./podi envset $HOST test PORT=9998
+./podi envset $HOST test PORT=9999
 git add .pod app .env
 git commit -m "recipe app/simple"
 git push test master

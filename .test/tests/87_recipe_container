@@ -1,6 +1,6 @@
 .test/test describe $0
 
-HOST=git@server.app.isvery.ninja
+test -z $HOST && { echo "ERROR: please provide docker-server using HOST=git@localhost e.g."; exit; }
 GITPATH=/home/git/test
 PORT=222
 ssh -p $PORT $HOST rm -rf /home/git/test 

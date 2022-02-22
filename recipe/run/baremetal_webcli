@@ -10,8 +10,12 @@ daemonize(){
   done
 }
 
-start(){
+stop(){
   test -f .pid  && { print "stopping $PODI_APP"; silent try kill -15 $(cat .pid); }
+}
+
+start(){
+  eval "$(cat .env)"
   { nohup ./podi daemonize $PODI_APP:$PORT 1> app.log 2> app.log; } &
   echo $! > .pid
   print "started $PODI_APP [PID $(cat .pid)] on $PODI_REMOTE:$PORT"
@@ -22,7 +26,7 @@ init_runtime(){
   test -f app || {
     generate(){ 
       echo '#!/bin/sh'
-      echo 'export JOB="cat hello.txt ; ls -la"'
+      echo 'export JOB="cat hello.txt ; ls --color -la"'
       echo 'which socat &>/dev/null || { echo "please install socat as root"; exit 1; }'
       echo 'socat -t2 TCP4-LISTEN:$PORT,fork,max-children=3,forever,reuseaddr SYSTEM:"$JOB",pty,echo=0;'
     }
@@ -31,7 +35,7 @@ init_runtime(){
     echo "HTTP/1.1 200\n\n H E L L O " > hello.txt
     git add app hello.txt && git commit -m "podi: adding app file"
   }
-  test -f .pod/extract/rollback_simple || recipe extract/rollback_simple
-  test -f .pod/start/envfile           || recipe start/envfile 
-  test -f .pod/init/server/sshkey      || recipe init/server/sshkey 
+  test -f .pod/checkout/rollback_simple || recipe checkout/rollback_simple
+  test -f .pod/start/envfile            || recipe start/envfile 
+  test -f .pod/init/server/sshkey       || recipe init/server/sshkey 
 }

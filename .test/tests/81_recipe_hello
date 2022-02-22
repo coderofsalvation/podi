@@ -1,7 +1,0 @@
-.test/test describe $0
-
-cd app
-cp ../podi .
-./podi recipe hello
-git add .pod && git commit -m "recipe hello"
-git push app1 master

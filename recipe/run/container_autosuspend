@@ -1,12 +1,12 @@
+export POD=$(which podman || which docker || echo "")
 
 hint_systemd(){
   service=/etc/systemd/system/$PODI_APP.service
   silent which podman || return 0
   test -f $service    && return 0
-  silent podman inspect $PODI_APP || return 0
-  podman generate systemd $PODI_APP > $PODI_APP.service
+  try podman generate systemd $PODI_APP 2>/dev/null > $PODI_APP.service
   print "to survive server-reboots please run as root:"
-  echo "cp $(pwd)/$PODI_APP.service /etc/systemd/system/." | soften
+  echo "podman generate systemd $PODI_APP $service" | soften
   echo "systemctl enable $PODI_APP.service" | soften
 }
 
@@ -14,8 +14,8 @@ build(){
   header .pod/app/container
   test -f Dockerfile || { print "'Dockerfile' not found..skipping build"; }
   test -f Dockerfile && {
-    silent which $container || print '[!] please install podman (or docker)'
-    silent which $container && verbose $container build -t $PODI_APP .
+    silent which $POD || print '[!] please install podman (or docker)'
+    silent which $POD && verbose $POD build -t $PODI_APP .
   } | soften 
   return 0
 }
@@ -24,25 +24,34 @@ daemonize(){
   while sleep 0.2s; do 
     set +e
     POD=$(which podman || which docker)
-    nc 2>&1 | silent grep BusyBox || NCARG="-N"
+    nc 2>&1 | silent grep BusyBox || NCARG="-q1"
     echo "starting $PODI_APP TTL=$TTL BOOTTIME=$BOOTTIME"
     test -z $($POD ps -a --filter=name=$PODI_APP| head -n-1) && ./app 
     $POD start $PODI_APP
     sleep $TTL
     $POD stop $PODI_APP 
     echo sleeping on port $PORT
-    echo "HTTP/1.1 302 OK\nrefresh:$BOOTTIME;url=/\n\n" | nc $NCARG -lp $PORT | awk '{ printf "\r",$0 }'
+    echo "HTTP/1.1 302 OK\nrefresh:$BOOTTIME;url=/\n\n" | nc $NCARG -lp $PORT
   done
+}
+
+stop(){
+  test -f .pid  && { 
+    print "stopping $PODI_APP"; 
+    silent try kill -15 $(cat .pid); 
+  }
+  test -z $POD || {
+    silent try $POD kill $PODI_APP
+    silent try $POD rm -f $PODI_APP
+  }
+  silent lsof -ti tcp:$PORT && lsof -ti tcp:$PORT | xargs kill 
 }
 
 start(){
   header .pod/app/container
   POD=$(which podman || which docker || echo "")
   silent which $POD || error "please install podman (or docker)"
-  test -f .pid  && { print "stopping $PODI_APP"; silent try kill -15 $(cat .pid); }
   test -z $POD || {
-    silent try $POD kill $PODI_APP
-    silent try $POD rm -f $PODI_APP
     export PODI_APP=$PODI_APP
     export PODI_GITPUSH=$PODI_GITPUSH
     eval "$(cat .env)"
@@ -61,23 +70,23 @@ init_runtime(){
   test -f app || {
     generate(){ 
       echo '#!/bin/sh'
-      echo 'test -z $PODI_APP  && PODI_APP=$(basename $(pwd))' 
-      echo 'test -f Dockerfile && IMAGE=$PODI_APP || IMAGE=docker.io/coderofsalvation/redbean:1.5'
-      echo 'CMD="/redbean.com -D . -p 80 -vv"'
+      echo 'set -x'
       echo 'POD=$(which podman || which docker)'
+      echo 'test -z $PODI_APP && export PODI_APP=$(basename $(dir))'
       echo 
-      echo '$POD run -d --rm --volume $(pwd):/home/app -w /home/app -e PORT -p $PORT:80 --name $PODI_APP $IMAGE $CMD' 
-      echo '$POD logs $PODI_APP 2>&1 | awk "{print \"[app.log] \"\$0 }"'
+      echo '$POD run -d --rm --volume $(pwd):/app -w /app -e PORT -p $PORT:8080 --name $PODI_APP $PODI_APP /redbean.com'  
+      echo '$POD logs $PODI_APP'
     }
     prompt "generate + commit 'app' startfile?" "$(generate | soften)" "[y/n] "
     test $answer = "y" || error aborting
+    echo "FROM docker.io/coderofsalvation/redbean:1.5" > Dockerfile
     generate > app 
     chmod 755 app 
-    git add app && git commit -m "podi: adding app file"
+    git add app Dockerfile && git commit -m "podi: adding app file"
   }
-  test -f .pod/extract/rollback_simple || recipe extract/rollback_simple
-  test -f .pod/start/envfile           || recipe start/envfile 
-  test -f .pod/init/server/sshkey      || recipe init/server/sshkey 
+  test -f .pod/checkout/rollback_simple || recipe checkout/rollback_simple
+  test -f .pod/start/envfile            || recipe start/envfile 
+  test -f .pod/init/server/sshkey       || recipe init/server/sshkey 
   echo "export TTL=5        # suspend after 5 seconds of activity (update me!)" >> .env
   echo "export BOOTTIME=2   # give app 2 second to wakeup         (update me!)" >> .env
 }

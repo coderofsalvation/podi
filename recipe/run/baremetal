@@ -3,6 +3,7 @@
 # example usage: ./podman rollback git@server 3fe2f615
 
 daemonize(){
+  kill -0 $(cat .pid)
   while sleep 1s; do 
     set +e
     ./app
@@ -10,8 +11,11 @@ daemonize(){
   done
 }
 
-start(){
+stop(){
   test -f .pid  && { print "stopping $PODI_APP"; silent try kill -15 $(cat .pid); }
+}
+
+start(){
   nohup ./podi daemonize $PODI_APP:$PORT &> app.log &
   echo $! > .pid
   print "started $PODI_APP [PID $(cat .pid)] on $PODI_REMOTE:$PORT"
@@ -30,7 +34,7 @@ init_runtime(){
     chmod 755 app 
     git add app && git commit -m "podi: adding app file"
   }
-  test -f .pod/extract/rollback_simple || recipe extract/rollback_simple
-  test -f .pod/start/envfile           || recipe start/envfile 
-  test -f .pod/init/server/sshkey      || recipe init/server/sshkey 
+  test -f .pod/checkout/rollback_simple || recipe checkout/rollback_simple
+  test -f .pod/start/envfile            || recipe start/envfile 
+  test -f .pod/init/server/sshkey       || recipe init/server/sshkey 
 }

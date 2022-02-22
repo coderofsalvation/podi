@@ -19,5 +19,3 @@ rollback(){ # rollback <user@remote> <app> <commit> : rolls back deployment to c
   scp -P $port $0 $user@$server:/tmp/. 1>/dev/null
   ssh -p $port $user@$server "export HOST=$user@$server; export ROLLBACK=$3; cd $gitpath; ./podi deploy"
 }
-
-on extract checkout_or_rollback

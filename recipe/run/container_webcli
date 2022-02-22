@@ -1,18 +1,17 @@
-POD=$(which podman  || which docker || echo "")
+export POD=$(which podman  || which docker || echo "")
 
 hint_systemd(){
   service=/etc/systemd/system/$PODI_APP.service
   silent which podman || return 0
   test -f $service    && return 0
-  silent podman inspect $PODI_APP || return 0
-  silent podman generate systemd $PODI_APP 1> $PODI_APP.service 2>/dev/null
+  try podman generate systemd $PODI_APP 2>/dev/null > $PODI_APP.service
   print "to survive server-reboots please run as root:"
-  echo "cp $(pwd)/$PODI_APP.service /etc/systemd/system/." | soften
+  echo "podman generate systemd $PODI_APP $service" | soften
   echo "systemctl enable $PODI_APP.service" | soften
 }
 
 build(){
-  header .pod/app/container
+  header .pod/app/container_webcli
   test -f Dockerfile || { print "'Dockerfile' not found..skipping build"; }
   test -f Dockerfile && {
     silent which $POD || print '[!] please install podman (or docker)'
@@ -21,14 +20,20 @@ build(){
   return 0
 }
 
+stop(){
+  header .pod/app/container_webcli
+  test -z $POD || {
+    silent try $POD kill $PODI_APP
+    silent try $POD rm -f $PODI_APP
+  }
+}
+
 start(){
-  header .pod/app/container
+  header .pod/app/container_webcli
   test -z $PODI_APP && PODI_APP=$(basename $(pwd))
   silent test -z $POD && error "please install podman (or docker)"
   test -z $POD || {
     export PODI_APP=$PODI_APP
-    silent try $POD kill $PODI_APP
-    silent try $POD rm -f $PODI_APP
     eval "$(cat .env)"
     POD=$(which podman || which docker)
     verbose $POD run -d --volume $(pwd):/home/app -w /home/app -e PORT -p $PORT:$PORT --name $PODI_APP --entrypoint=sh $PODI_APP -c ./app
@@ -56,7 +61,7 @@ init_runtime(){
     echo "FROM docker.io/alpine/socat" > Dockerfile
     git add app Dockerfile hello.txt && git commit -m "podi: adding app file"
   }
-  test -f .pod/extract/rollback_simple || recipe extract/rollback_simple
-  test -f .pod/start/envfile           || recipe start/envfile 
-  test -f .pod/init/server/sshkey      || recipe init/server/sshkey 
+  test -f .pod/checkout/rollback_simple || recipe checkout/rollback_simple
+  test -f .pod/start/envfile            || recipe start/envfile 
+  test -f .pod/init/server/sshkey       || recipe init/server/sshkey 
 }

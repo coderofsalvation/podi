@@ -5,8 +5,7 @@ mkdir app
 cd app
 cp ../podi .
 export RECIPE_REPOS=http://localhost:8081/recipe/index.txt 
-set -x
-./podi recipe run/baremetal_webcli
+./podi recipe run/baremetal_autosuspend
 ./podi init_runtime
 ./podi init git@localhost:/home/git/app5 master 2222
 ./podi envset git@localhost app5 PORT=9999

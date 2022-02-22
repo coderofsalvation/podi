@@ -37,4 +37,5 @@ ensure_file_env(){
 }
 
 on checkout envfile 
+on checkout envfile 
 on init_localhost ensure_file_env
