@@ -42,8 +42,9 @@ init_runtime(){
     prompt "generate + commit 'app' startfile?" "$(generate | soften)" "[y/n] "
     test $answer = "y" || error aborting
     generate > app 
+    echo "export PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')" >> .env
     chmod 755 app 
-    git add app && git commit -m "podi: adding app file"
+    git add app .env .pod podi && git commit -m "adding podi"
   }
   test -f .pod/checkout/rollback_simple || recipe checkout/rollback_simple
   test -f .pod/start/envfile            || recipe start/envfile 

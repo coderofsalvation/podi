@@ -72,7 +72,7 @@ init_runtime(){
       echo '#!/bin/sh'
       echo 'set -x'
       echo 'POD=$(which podman || which docker)'
-      echo 'test -z $PODI_APP && export PODI_APP=$(basename $(dir))'
+      echo 'test -z $PODI_APP && export PODI_APP=$(basename $(pwd))'
       echo 
       echo '$POD run -d --rm --volume $(pwd):/app -w /app -e PORT -p $PORT:8080 --name $PODI_APP $PODI_APP /redbean.com'  
       echo '$POD logs $PODI_APP'
@@ -82,7 +82,8 @@ init_runtime(){
     echo "FROM docker.io/coderofsalvation/redbean:1.5" > Dockerfile
     generate > app 
     chmod 755 app 
-    git add app Dockerfile && git commit -m "podi: adding app file"
+    echo "export PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')" >> .env
+    git add app Dockerfile .env .pod podi && git commit -m "adding podi"
   }
   test -f .pod/checkout/rollback_simple || recipe checkout/rollback_simple
   test -f .pod/start/envfile            || recipe start/envfile 

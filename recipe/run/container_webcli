@@ -59,7 +59,8 @@ init_runtime(){
     chmod 755 app 
     echo "HTTP/1.1 200\n\n H E L L O " > hello.txt
     echo "FROM docker.io/alpine/socat" > Dockerfile
-    git add app Dockerfile hello.txt && git commit -m "podi: adding app file"
+    echo "export PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')" >> .env
+    git add app Dockerfile .env hello.txt .pod podi && git commit -m "adding podi"
   }
   test -f .pod/checkout/rollback_simple || recipe checkout/rollback_simple
   test -f .pod/start/envfile            || recipe start/envfile 

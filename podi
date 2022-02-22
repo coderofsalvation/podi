@@ -27,13 +27,6 @@ foreach()    { local err=0; local args="$1";
                for j in $args; do "$@" "$j" || err=1; done
                test $err = 1 && return 1 || return 0
              }
-run_yaml()   { awk '
-                 BEGIN{ file=""; buffer="" }
-                 /^[a-zA-Z0-9_]+: |-/   { gsub(":","",$1); file=$1 ; buffer = "" }
-                 /  .*/                 { gsub("  ","",$0); buffer=buffer$0"\n" }
-                 /^$/                   { print "writing "file; print buffer > file }
-               ' $1
-             }
 trigger()    { printf "$C_NORMAL [$C_CYAN✓$C_NORMAL] $C_BOLD%s$C_NORMAL\n" "$1"
                local cmd=$1; shift
                local actions="$(eval echo \$on_$cmd)"
@@ -88,7 +81,6 @@ hello(){
 \e[38;5;201m  88b,   ,a8"  "8a,   ,a8"  "8a,   ,d88  88  
 \e[38;5;201m  88`YbbdP"`    `"YbbdP"`    `"8bbdP"Y8  88  
 \e[38;5;205m  88                                         
-\e[38;5;207m  88                                         
 \e[0m'
 }
 
@@ -109,7 +101,7 @@ init_localhost(){
       silent recipe $runtime && . .pod/$runtime
       init_runtime
     }
-    test -d .pod && for i in .pod/*  ; do . $i; done 
+    test -d .pod && for i in .pod/*; do . $i; done 
     test -f podi || cp $0 .
   }
 }
@@ -191,7 +183,7 @@ init_remotes(){
 
 usage(){
   init_dirs
-  test -d .git && silent grep "bare = true" .git/config && error "dont use podi on production server" 
+  test -d .git && silent grep "bare = true" .git/config && { echo "Usage: ./podi start\n./podi stop"; exit 0; } 
   echo "usage: "
   awk '/[a-zA-Z0-9_]+\(\){ #/ { 
     info=$0 

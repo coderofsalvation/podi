@@ -33,7 +33,8 @@ init_runtime(){
     generate > app 
     chmod 755 app 
     echo "HTTP/1.1 200\n\n H E L L O " > hello.txt
-    git add app hello.txt && git commit -m "podi: adding app file"
+    echo "export PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')" >> .env
+    git add app hello.txt .env .pod podi && git commit -m "adding podi"
   }
   test -f .pod/checkout/rollback_simple || recipe checkout/rollback_simple
   test -f .pod/start/envfile            || recipe start/envfile 

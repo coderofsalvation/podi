@@ -1,7 +1,9 @@
-FROM alpine:3.1
+FROM alpine:3.9
 
 RUN apk update \
-    && apk add openssh git socat\
+    && echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories \
+    && apk update \
+    && apk add openssh git socat \
     && addgroup -S git && adduser -D -S git -G git -s /bin/sh \
     && mkdir -p /home/git/.ssh \
     && chmod 0700 /home/git/.ssh \
