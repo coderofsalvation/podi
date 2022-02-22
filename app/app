@@ -1,3 +1,13 @@
 #!/bin/sh
-echo PID=$(cat .pid) => $(date) PORT=$PORT
-while sleep 1; do printf .; done 
+d=-d 
+test -z $PODI_GITPUSH && { PODI_APP=$(basename $(pwd)); f="-f"; d=""; }
+
+IMAGE=docker.io/coderofsalvation/redbean:1.5
+CMD="/redbean.com -D . -p 80 -vv"
+POD=$(which podman || which docker)
+
+test -f Dockerfile && IMAGE=$PODI_APP
+set -x
+$POD run $d --rm --volume $(pwd):/home/app -w /home/app -e PORT -p $PORT:80 --name $PODI_APP $IMAGE $CMD
+set +x;
+$POD logs $f $PODI_APP 2>&1 | awk "{print \"[app.log] \"\$0 }"
