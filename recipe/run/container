@@ -1,0 +1,60 @@
+container=$(which podman || which docker || echo "")
+test -z $PODI_APP && PODI_APP=$(basename $(pwd))
+
+hint_systemd(){
+  service=/etc/systemd/system/$PODI_APP.service
+  silent which podman || return 0
+  test -f $service    && return 0
+  silent podman inspect $PODI_APP || return 0
+  podman generate systemd $PODI_APP > $PODI_APP.service
+  print "to survive server-reboots please run as root:"
+  echo "cp $(pwd)/$PODI_APP.service /etc/systemd/system/." | soften
+  echo "systemctl enable $PODI_APP.service" | soften
+}
+
+build(){
+  header .pod/app/container
+  test -f Dockerfile && {
+    silent which $container || print '[!] please install podman (or docker)'
+    silent which $container && verbose $container build -t $PODI_APP .
+  } | soften 
+}
+
+start(){
+  header .pod/app/container
+  silent which $container && {
+    silent $container kill $PODI_APP
+    silent $container rm -f $PODI_APP
+    export PODI_APP=$PODI_APP
+    eval "$(cat .env)"
+    verbose ./app 
+    hint_systemd
+    print ""
+    print "your container is running at $PODI_REMOTE:$PORT"
+  } 
+}
+
+ensure_file_app(){
+  test -f app || {
+    generate(){ 
+      echo '#!/bin/sh' > app 
+      echo 'c=$(which podman || which docker)'                     
+      echo 'follow=-f'
+      echo 'bg=-d'                                                         
+      echo 'test -z $PODI_APP && { bg=""; PODI_APP=$(basename $(pwd)); follow=""; }' 
+      echo 'set -x'                                                       
+      echo '$c run $bg --rm --volume $(pwd):/home/app -w /home/app -e PORT -p $PORT:80 --name $PODI_APP docker.io/coderofsalvation/redbean /redbean.com -D . -p 80 -vv' 
+      echo 'set +x'                                                       
+      echo '$c logs $follow $PODI_APP'
+    }
+    prompt "'app' file not found:"
+    generate | soften
+    prompt "generate + commit it?"
+    test $answer = "y" || error aborting
+    generate > app 
+    chmod 755 app 
+    git add app && git commit -m "podi: adding app file"
+  }
+  test -f .pod/extract/rollback_simple || recipe extract/rollback_simple
+  test -f .pod/start/envfile           || recipe start/envfile 
+}

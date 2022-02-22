@@ -1,0 +1,12 @@
+app: |-
+  #!/bin/sh
+  echo "PID=$(cat .pid) => $(date) PORT=$PORT"
+  while sleep 1; do printf .; done 
+
+foo: |-
+  bar
+  flop
+
+cmd:
+  - chmod 755 app
+  - echo "export PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')" > .env

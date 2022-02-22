@@ -1,5 +1,5 @@
 # info:          perform easy server-rollbacks based on gitcommit
-# installation:  run 'podi recipe rollback.simple' or put this file into .podman folder 
+# installation:  run 'podi recipe rollback.simple' or put this file into .pod folder 
 # example usage: ./podman rollback git@server 3fe2f615
 
 checkout(){

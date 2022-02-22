@@ -1,0 +1,30 @@
+# info:          simple app template 
+# installation:  run 'podi recipe app/simple' or put this file into .pod folder 
+# example usage: ./podman rollback git@server 3fe2f615
+
+daemonize(){
+  while sleep 1s; do 
+    set +e
+    ./app
+    echo "$(tail -n200 app.log)" > app.log
+  done
+}
+
+start(){
+  test -f .pid  && { print "stopping $PODI_APP"; silent try kill -15 $(cat .pid); }
+  nohup ./podi daemonize $PODI_APP:$PORT &> app.log &
+  echo $! > .pid
+  print "started $PODI_APP [PID $(cat .pid)]"
+}
+
+ensure_file_app(){
+  test -f app || {
+    print "'app' startfile not found, please create + commit it. For example:"
+    echo  "  $ echo 'node app.js' > app && chmod 755 app" | soften
+    exit 0
+  }
+  test -f .pod/extract/rollback_simple || recipe extract/rollback_simple
+  test -f .pod/start/envfile           || recipe start/envfile 
+}
+
+on init_localhost ensure_file_app

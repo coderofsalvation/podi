@@ -1,0 +1,38 @@
+# info:          simple app template which suspends/activates based on port-traffic 
+# installation:  run 'podi recipe app/simple_autosuspend' or put this file into .pod folder 
+# example usage: ./podman rollback git@server 3fe2f615
+
+daemonize(){
+  while sleep 1s; do 
+    set +e
+    echo "starting TTL=$TTL BOOTTIME=$BOOTTIME"
+    TTLARG=$TTL
+    timeout 2>&1 | silent grep BusyBox && TTLARG="-t $TTL"
+    timeout -s 15 ${TTLARG} ./app
+    echo "$(tail -n200 app.log)" > app.log
+    echo sleeping on port $PORT
+    echo "HTTP/1.1 302 OK\nrefresh:$BOOTTIME;url=/\n\n" | nc -lp $PORT | awk '{ printf "\r",$0 }'
+  done
+}
+
+start(){
+  test -f .pid  && { print "stopping $PODI_APP"; silent try kill -15 $(cat .pid); }
+  nohup ./podi daemonize $PODI_APP:$PORT &> app.log &
+  echo $! > .pid
+  print "started $PODI_APP [PID $(cat .pid)]"
+  print "autosleeping after $TTL seconds (.env)"
+  print "waking up after network request on port $PORT"
+}
+
+ensure_file_app(){
+  test -f app || {
+    print "'app' startfile not found, please create + commit it. For example:"
+    echo  "  $ echo 'node app.js' > app && chmod 755 app" | soften
+    exit 0
+  }
+  test -f .pod/extract/rollback_simple || recipe extract/rollback_simple
+  test -f .pod/start/envfile           || recipe start/envfile 
+}
+
+on init_localhost ensure_file_app
+on init_localhost create_app

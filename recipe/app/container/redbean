@@ -1,0 +1,28 @@
+
+create_container_app(){
+  header .pod/app/container 
+  test -f Dockerfile || {
+    print "writing Dockerfile"
+    echo "FROM docker.io/coderofsalvation/redbean" > Dockerfile
+  }
+  test -f .env || {
+    print "writing .env"
+    PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')
+    echo 'export PORT='$PORT   >> .env
+  }
+  test -f app || {
+    print "writing app"
+    echo '#!/bin/sh' > app 
+    echo 'bg=-d'                                                        >> app 
+    echo 'container=$(which podman || which docker)'                    >> app 
+    echo 'test -z $PODI_APP && { bg=""; PODI_APP=$(basename $(pwd)); }' >> app
+    echo 'set -x'                                                       >> app
+    echo '$container run $bg --rm --volume $(pwd):/home/app -w /home/app -e PORT -p $PORT:80 --name $PODI_APP $PODI_APP /redbean.com -p 80 -vv' >> app
+    echo 'set +x'                                                       >> app
+    echo '$container logs $PODI_APP' >> app
+    chmod 755 app
+  }
+  print "run './podi start' to run your container locally"
+}
+
+on init_localhost create_container_app

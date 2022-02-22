@@ -9,10 +9,10 @@ $ git add .pod/foo
 
 # Adding your own recipe repository
 
-Just expose a directory with recipes, and add `.index.txt` in that directory:
+Just expose a directory with recipes, and add `index.txt` in that directory:
 
 ```bash
-$ find -type f | grep -v index.txt | sed 's/^\.\///g' > .index.txt
+$ find -type f | grep -v index.txt | sed 's/^\.\///g' > index.txt
 ```
 
 Then add the index-url to the `podi` script:
