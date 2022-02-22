@@ -1,0 +1,56 @@
+# info:          containerized stack, nice startingpoint using docker-compose.yml 
+
+export POD=$(which podman-compose || which docker-compose)
+
+build(){
+  header .pod/app/container-compose
+  test -f docker-compose.yml || { print "'docker-compose.yml' not found..skipping build"; }
+  test -f docker-compose.yml && {
+    silent which $POD || print '[!] please install podman-compose (or docker-compose)'
+    silent which $POD && verbose $POD build
+  } | soften 
+  return 0
+}
+
+stop(){
+  test -z $POD || verbose $POD down
+}
+
+start(){
+  header .pod/app/container
+  silent which $POD || error "please install podman-compose (or docker-compose)"
+  test -z $POD || {
+    export PODI_APP=$PODI_APP
+    eval "$(cat .env)"
+    verbose $POD up -d
+    verbose $POD logs
+    print ""
+    print "your container(s) is running at $PODI_REMOTE:$PORT"
+  } 
+  return 0
+}
+
+init_runtime(){
+  test -f docker-compose || {
+    generate(){ 
+      echo 'version: "3.9"'
+      echo 'services:'
+      echo '  web:'
+      echo '    image: docker.io/coderofsalvation/redbean:1.5'
+      echo '    command: /redbean.com -D /app'
+      echo '    volumes:'
+      echo '      - .:/app'
+      echo '    ports:'
+      echo '      - "${PORT}:8080"'
+    }
+    PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')
+    prompt "generate + commit 'docker-compose.yml' file?" "$(generate | soften)" "[y/n] "
+    generate > docker-compose.yml
+    test $answer = "y" || error aborting
+    echo "export PORT=$PORT" >> .env 
+    git add docker-compose.yml .env .pod podi && git commit -m "adding podi"
+  }
+  test -f .pod/checkout/rollback_simple || recipe checkout/rollback_simple
+  test -f .pod/start/envfile            || recipe start/envfile 
+  test -f .pod/init/server/sshkey       || recipe init/server/sshkey 
+}

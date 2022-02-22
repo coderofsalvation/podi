@@ -26,6 +26,6 @@ envset(){ # envset [git@server] [app] [FOO=bar] : shows or sets [remote] environ
   fi
 }
 
-on start envfile
+on build envfile
 on checkout envfile 
 on init_runtime ensure_file_env

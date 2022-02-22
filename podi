@@ -19,7 +19,7 @@ verbose()    { printf "  $C_BOLD\$$C_NORMAL $*\n"; "$@"; }
 prompt()     { printf " [?] $C_CYAN$1$C_NORMAL"; printf "\n$2\n  $3> "; read answer; }
 error()      { printf " [$C_RED"e"$C_NORMAL] %s\n" "$*"; exit 1; }
 print()      { printf "  $C_PURPLE│ $C_NORMAL %s\n" "$*"; return 0; }
-soften()     { cat | while read line; do printf "  $C_PURPLE| $C_GREY%s$C_NORMAL\n" "$line"; done; }
+soften()     { cat | while IFS='' read line; do printf "  $C_PURPLE| $C_GREY%s$C_NORMAL\n" "$line"; done; }
 header()     { h=$1; shift; printf "  $C_PURPLE├─ $C_CYAN""%s""$C_PURPLE $C_NORMAL%s\n" "$h" "$*"; }
 evalfunc()   { type $1 | awk 'NR>2 && /^[^{][^}]/ { print $0 }'; }
 foreach()    { local err=0; local args="$1"; 
@@ -85,6 +85,7 @@ hello(){
 }
 
 init(){ # init git@server:/dir/to/deploy [branch] [port] [name] : initializes a deployment 
+  echo "$1" | silent grep ":" || usage
   test -z $1 && usage 
   trigger init_localhost
   trigger init_server "$@"

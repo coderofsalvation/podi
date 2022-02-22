@@ -1,6 +1,4 @@
-# info:          simple app template 
-# installation:  run 'podi recipe app/simple' or put this file into .pod folder 
-# example usage: ./podman rollback git@server 3fe2f615
+# info:          baremetal cli-template, perfect for outputting terminal-cmds to web
 
 daemonize(){
   while sleep 1s; do 

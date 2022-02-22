@@ -2,7 +2,7 @@ helloworld.yaml
 hello
 pipeline
 app/container/redbean
-extract/rollback_simple
+checkout/rollback_simple
 init/server/sshkey
 init/gitops/jail
 start/envfile
@@ -12,3 +12,4 @@ run/container_autosuspend
 run/baremetal_webcli
 run/baremetal
 run/container_webcli
+run/container_compose

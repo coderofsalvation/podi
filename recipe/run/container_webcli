@@ -1,3 +1,5 @@
+# info:          containerized cli-template, perfect for outputting terminal-cmds to web
+
 export POD=$(which podman  || which docker || echo "")
 
 hint_systemd(){

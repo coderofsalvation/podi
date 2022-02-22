@@ -1,6 +1,6 @@
 > remove layers of complexity.
 
-![](./doc/intro.svg)
+![](./doc/workflow.jpg)
 
 ## Usage
 
@@ -12,7 +12,7 @@ $ chmod 755 podi
 
 > PROFIT! now init your (ssh)server to enable a heroku-ish workflow:
 
-![](./doc/workflow.jpg)
+![](./doc/intro.svg)
 
 ## Features
 
@@ -23,9 +23,30 @@ $ chmod 755 podi
 * podi weighs ~7k, just needs ssh+git installed
 * works on raspberry pi zero but also on kubernetes
 
-## Create recipes
+## Extend deployments 
 
 ![](./doc/extend.svg)
+
+## Templates
+
+```bash
+$ ./podi init git@yourserver:/home/git/myapp master
+
+ [✓] init
+ [✓] init_localhost
+  │  writing .pod/pipeline
+ [?] how to run this app?
+     1  run/baremetal                <--  perfect to run background services on lowend systems
+     2  run/baremetal_autosuspend    <--  perfect for port-activated services on lowend systems
+     3  run/baremetal_webcli         <--  perfect for outputting terminal-cmds to web
+     4  run/container                <--  nice starting point for Dockerfile + app 
+     5  run/container_autosuspend    <--  port-activated container, nice starting point for Dockerfile + app 
+     6  run/container_webcli         <--  containerized cli, perfect for outputting terminal-cmds to web
+     7  run/container_compose        <--  containerized stack, nice startingpoint using docker-compose.yml 
+  > ▉  
+```
+
+> IDEA: create your own! (see [adding your own recipes](doc/recipes.md) )
 
 ## Install
 

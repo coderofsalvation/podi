@@ -1,6 +1,4 @@
-# info:          simple app template which suspends/activates based on port-traffic 
-# installation:  run 'podi recipe app/simple_autosuspend' or put this file into .pod folder 
-# example usage: ./podman rollback git@server 3fe2f615
+# info:          baremetal template, perfect for port-activated services on lowend systems
 
 daemonize(){
   while sleep 0.2s; do 
