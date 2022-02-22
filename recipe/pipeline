@@ -1,11 +1,13 @@
-# basic starting point for gitops pipeline
-
 deploy(){
   trigger hello
   trigger backup
-  trigger checkout
+  trigger checkout 
   trigger build
   trigger runtests
   trigger stop
   trigger start
+}
+
+checkout(){
+  git --work-tree=$(pwd) --git-dir=$(pwd)/.git checkout -f
 }
