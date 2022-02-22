@@ -28,14 +28,10 @@ envset(){ # envset [git@server] [app] [FOO=bar] : shows or sets [remote] environ
 
 ensure_file_env(){
   test -f .env || {
-    generate(){ echo "export PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')"; }
-    prompt "generate + commit '.env' startfile?" "$(generate | soften)" "[y/n] "
-    test $answer = "y" || error aborting
-    generate > .env
+    echo "export PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')" > .env
     git add .env && git commit -m "podi: adding .env file"
   }
 }
 
-on checkout envfile 
 on checkout envfile 
 on init_localhost ensure_file_env
