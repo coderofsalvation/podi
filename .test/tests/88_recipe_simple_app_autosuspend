@@ -5,10 +5,10 @@ mkdir app
 cd app
 cp ../podi .
 export RECIPE_REPOS=http://localhost:8081/recipe/index.txt 
-./podi recipe run/baremetal
+./podi recipe run/baremetal_autosuspend
 ./podi init_runtime
 ./podi init git@localhost:/home/git/app5 master 2222
 ./podi envset git@localhost app5 PORT=9999
 git add .pod app .env
 git commit -m "recipe app/simple"
-git push app5 master
+git push -f app5 master

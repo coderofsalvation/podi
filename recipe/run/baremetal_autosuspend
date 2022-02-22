@@ -3,15 +3,16 @@
 # example usage: ./podman rollback git@server 3fe2f615
 
 daemonize(){
-  while sleep 1s; do 
+  while sleep 0.2s; do 
     set +e
-    echo "starting TTL=$TTL BOOTTIME=$BOOTTIME"
+    echo "starting $PODI_APP TTL=$TTL BOOTTIME=$BOOTTIME"
     TTLARG=$TTL
+    nc 2>&1      | silent grep BusyBox || NCARG="-N"
     timeout 2>&1 | silent grep BusyBox && TTLARG="-t $TTL"
     timeout -s 15 ${TTLARG} ./app
     echo "$(tail -n200 app.log)" > app.log
     echo sleeping on port $PORT
-    echo "HTTP/1.1 302 OK\nrefresh:$BOOTTIME;url=/\n\n" | nc -lp $PORT | awk '{ printf "\r",$0 }'
+    echo "HTTP/1.1 302 OK\nrefresh:$BOOTTIME;url=/\n\n" | nc $NCARG -lp $PORT | awk '{ printf "\r",$0 }'
   done
 }
 
@@ -19,20 +20,27 @@ start(){
   test -f .pid  && { print "stopping $PODI_APP"; silent try kill -15 $(cat .pid); }
   nohup ./podi daemonize $PODI_APP:$PORT &> app.log &
   echo $! > .pid
-  print "started $PODI_APP [PID $(cat .pid)]"
+  print "started $PODI_APP [PID $(cat .pid)] on $PODI_REMOTE:$PORT"
   print "autosleeping after $TTL seconds (.env)"
   print "waking up after network request on port $PORT"
 }
 
-ensure_file_app(){
+init_runtime(){
   test -f app || {
-    print "'app' startfile not found, please create + commit it. For example:"
-    echo  "  $ echo 'node app.js' > app && chmod 755 app" | soften
-    exit 0
+    generate(){ 
+      echo '#!/bin/sh'
+      echo 'echo PID=$(cat .pid) => $(date) PORT=$PORT'
+      echo 'while sleep 1; do printf .; done '
+    }
+    prompt "generate + commit 'app' startfile?" "$(generate | soften)" "[y/n] "
+    test $answer = "y" || error aborting
+    generate > app 
+    chmod 755 app 
+    git add app && git commit -m "podi: adding app file"
   }
   test -f .pod/extract/rollback_simple || recipe extract/rollback_simple
   test -f .pod/start/envfile           || recipe start/envfile 
+  test -f .pod/init/server/sshkey      || recipe init/server/sshkey 
+  echo "export TTL=5        # suspend after 5 seconds of activity (update me!)" >> .env
+  echo "export BOOTTIME=1   # give app 1 second to wakeup         (update me!)" >> .env
 }
-
-on init_localhost ensure_file_app
-on init_localhost create_app

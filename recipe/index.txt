@@ -8,4 +8,7 @@ init/gitops/jail
 start/envfile
 run/baremetal_autosuspend
 run/container
+run/container_autosuspend
+run/baremetal_webcli
 run/baremetal
+run/container_webcli

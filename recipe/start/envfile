@@ -6,8 +6,8 @@
 
 envfile(){
   header .pod/envfile
-  test -f .env      && { print "reading  '.env'"     ; . .env;      }
-  test -f .env.live && { print "reading  '.env.live'"; . .env.live; }
+  test -f .env      && { print "reading  '.env'"     ; eval "$(cat .env)";      }
+  test -f .env.live && { print "reading  '.env.live'"; eval "$(cat .env.live)"; }
 }
 
 envset(){ # envset [git@server] [app] [FOO=bar] : shows or sets [remote] environment variables
@@ -27,11 +27,9 @@ envset(){ # envset [git@server] [app] [FOO=bar] : shows or sets [remote] environ
 }
 
 ensure_file_env(){
-  test -f app || {
+  test -f .env || {
     generate(){ echo "export PORT=$(awk 'BEGIN{ srand(); print int(rand()*1000)+8000 }')"; }
-    prompt "'.env' file not found:"
-    generate | soften
-    prompt "generate + commit it?"
+    prompt "generate + commit '.env' startfile?" "$(generate | soften)" "[y/n] "
     test $answer = "y" || error aborting
     generate > .env
     git add .env && git commit -m "podi: adding .env file"

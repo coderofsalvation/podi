@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 required="awk ssh git hostname basename"
-test -z $HOST && host=$USER@$(hostname) || host=$HOST
-RECIPE_REPOS="https://raw.githubusercontent.com/coderofsalvation/podi/master/recipe/.index.txt"
+test -z $HOST           && host=$USER@$(hostname) || host=$HOST
+test -z "$RECIPE_REPOS" && RECIPE_REPOS="https://raw.githubusercontent.com/coderofsalvation/podi/master/recipe/index.txt"
 #trap "trigger cleanup" 0 1 2 3 6
 C_GREY="\\033[1;30m"
 C_BOLD="\\033[1;37;40m"
@@ -12,12 +12,14 @@ C_PURPLE="\\033[38;5;207m"
 C_RED="\\033[0;31m"
 
 # some hipster wrappers to make things readable and sexy later on
-extract()    { awk '/^# '$1':/ { gsub("^# '$1': ","",$0); print $0 }' $0; }
 try()        { set +e; "$@"; set -e; return 0;     }
-silent()     { "$@" 1>/dev/null 2>/dev/null;       }
+silent()     { "$@" 1>/dev/null 2>/dev/null; return $?; }
 installed()  { which $1 2>/dev/null 1>/dev/null;   }
+verbose()    { printf "  $C_BOLD\$$C_NORMAL $*\n"; "$@"; }
+prompt()     { printf " [?] $C_CYAN$1$C_NORMAL"; printf "\n$2\n  $3> "; read answer; }
 error()      { printf " [$C_RED"e"$C_NORMAL] %s\n" "$*"; exit 1; }
-print()      { printf "  $C_PURPLE│ $C_NORMAL %s\n" "$*"; }
+print()      { printf "  $C_PURPLE│ $C_NORMAL %s\n" "$*"; return 0; }
+soften()     { cat | while read line; do printf "  $C_PURPLE| $C_GREY%s$C_NORMAL\n" "$line"; done; }
 header()     { h=$1; shift; printf "  $C_PURPLE├─ $C_CYAN""%s""$C_PURPLE $C_NORMAL%s\n" "$h" "$*"; }
 evalfunc()   { type $1 | awk 'NR>2 && /^[^{][^}]/ { print $0 }'; }
 foreach()    { local err=0; local args="$1"; 
@@ -25,36 +27,30 @@ foreach()    { local err=0; local args="$1";
                for j in $args; do "$@" "$j" || err=1; done
                test $err = 1 && return 1 || return 0
              }
-trigger()    { printf "$C_BOLD%-25s $C_NORMAL[$C_CYAN✓$C_NORMAL] ($C_GREY%s)$C_NORMAL\n" "$(test $host = $USER@$(hostname) && printf $1 || printf "  | $1")" $host 1>&2
+run_yaml()   { awk '
+                 BEGIN{ file=""; buffer="" }
+                 /^[a-zA-Z0-9_]+: |-/   { gsub(":","",$1); file=$1 ; buffer = "" }
+                 /  .*/                 { gsub("  ","",$0); buffer=buffer$0"\n" }
+                 /^$/                   { print "writing "file; print buffer > file }
+               ' $1
+             }
+trigger()    { printf "$C_NORMAL [$C_CYAN✓$C_NORMAL] $C_BOLD%s$C_NORMAL\n" "$1"
                local cmd=$1; shift
                local actions="$(eval echo \$on_$cmd)"
                if test -n "$actions"; then 
                  silent try type $cmd && { $cmd "$@"; }
                  for it in $actions; do trigger $it "$@"; done 
                else 
-                 set +e
                  silent type $cmd || return 0; 
                  silent type $cmd && $cmd "$@"; 
-                 set -e
                fi 
+               return $?
              }
 on()         { export on_$1="$2 $(eval echo \$on_$1)"; }
 
-# pipeline: deploy(){
-# pipeline:   trigger hello
-# pipeline:   trigger backup
-# pipeline:   trigger checkout 
-# pipeline:   trigger build
-# pipeline:   trigger runtests
-# pipeline:   trigger start
-# pipeline: }
-# pipeline: 
-# pipeline: checkout(){
-# pipeline:   git --work-tree=$(pwd) --git-dir=$(pwd)/.git checkout -f
-# pipeline: }
-
 init_post_receive(){
   echo "#!/bin/sh
+    export PODI_GITPUSH=1
     export PODI_REMOTE=$2
     export PODI_USER=$3
     export PODI_PORT=$4
@@ -100,10 +96,17 @@ init(){ # init git@server:/dir/to/deploy [branch] [port] [name] : initializes a 
 }
 
 init_localhost(){
-  test -d ~/.pod || { mkdir -p ~/.pod && extract config   > ~/.pod/config; }
-  test -d .pod   || { 
-    mkdir -p .pod  && extract pipeline > .pod/pipeline; 
-    test -d   .pod && for i in .pod/*  ; do . $i; done 
+  test -d .git || git init
+  test -f .pod/pipeline   || { 
+    test -d .pod || mkdir -p .pod
+    test -d .pod/run || {
+      prompt "how to run this app?" "$(recipe | grep '^run/' | cat -n)" 
+      runtime=$(recipe | grep '^run/' | awk "NR == $answer { print \$0 }")
+      silent recipe $runtime && . .pod/$runtime
+      init_runtime
+    }
+    test -f .pod/pipeline || recipe pipeline
+    test -d .pod && for i in .pod/*  ; do . $i; done 
     test -f podi || cp $0 .
   }
 }
@@ -126,7 +129,7 @@ init_server(){
   echo "export appname='$appname'                    " >> $config
   echo "export branch='$branch'                      " >> $config
   . $config 
-  ssh -p $port $user@$server HOST=$user@$server mkdir $gitpath
+  try silent ssh -p $port $user@$server HOST=$user@$server mkdir $gitpath
   scp -r -P $port $0 .pod $user@$server:$gitpath/. 1>/dev/null
   try ssh -p $port $user@$server "cd $gitpath; ./podi init_gitops $gitpath $server $user $port"
   set +e
@@ -146,7 +149,7 @@ init_gitops(){
   test -d $1/.git || {
     silent git init --bare "$1/.git" || error could not create $1/.git
   }
-  trigger init_post_receive $1 $2 $3 $4 > $1/.git/hooks/post-receive
+  init_post_receive $1 $2 $3 $4 > $1/.git/hooks/post-receive
   chmod +x $1/.git/hooks/post-receive
 }
 
@@ -154,21 +157,21 @@ recipe(){ # recipe <name_or_url> : installs a recipe from podi repo or url
   list(){
     for repo in $RECIPE_REPOS; do 
       print $(dirname $repo)
-      curl $repo
+      curl -s $repo
     done
   }
   install(){
     for repo in $RECIPE_REPOS; do 
-      curl -s $repo | grep -E "^$1$" && {
+      curl -s $repo | silent grep -E "^$1$" && {
+        test -d .git || git init
         test -d .pod || mkdir .pod
-        print "installing $(dirname $repo)/$1"
+        print "writing .pod/$1"
         dir=$(dirname $1)
         test -d .pod/$dir || mkdir -p .pod/$dir
         curl -s $(dirname $repo)/$1 > .pod/$dir/$(basename $1)
       }
     done
   }
-  init_localhost
   test -z $1 && list
   test -z $1 || install $1
 }
@@ -191,7 +194,7 @@ usage(){
     gsub(".*{ # ","",$0)
     gsub(" :.*","",$0)
     printf("    %-55s %s\n",$0,info)
-  }' $0 .pod/* 2>/dev/null
+  }' $0 $(find .pod -type f | awk '{ printf "%s ",$0 }') 2>/dev/null
   echo 
   init_remotes
   printf "deploy targets:\n"

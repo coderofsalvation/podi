@@ -1,7 +1,7 @@
 FROM alpine:3.1
 
 RUN apk update \
-    && apk add openssh git \
+    && apk add openssh git socat\
     && addgroup -S git && adduser -D -S git -G git -s /bin/sh \
     && mkdir -p /home/git/.ssh \
     && chmod 0700 /home/git/.ssh \
