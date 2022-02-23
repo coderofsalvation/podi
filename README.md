@@ -18,12 +18,23 @@ $ chmod 755 podi
 
 * fully hackable PaaS & Gitops-designer (embedded in your repo)
 * multitenant: multi-branch and multi-sshuser deployments 
-* `podi ls`: gitops templates for containerizing, autosuspending services on baremetal etc
+* `podi ls`: gitops templates for containerizing, autosuspending services on baremetal/podman/docker etc
 * hookable (`on build callmyfunction arg1`)
 * podi weighs ~7k, just needs ssh+git installed
 * works on raspberry pi zero but also on kubernetes
 
-## Extend deployments 
+## Install
+
+```bash
+$ wget "https://raw.githubusercontent.com/coderofsalvation/podi/master/podi"
+$ chmod 755 podi
+$ ./podi
+usage: 
+    init git@server:/dir/to/deploy [branch] [port] [name]   initializes a deployment 
+    recipe <name_or_url>                                    installs a recipe from podi repo or url
+```
+
+## Hooks / extend deployments 
 
 ![](./doc/extend.svg)
 
@@ -47,17 +58,6 @@ $ ./podi init git@yourserver:/home/git/myapp master
 ```
 
 > IDEA: create your own! (see [adding your own recipes](doc/recipes.md) )
-
-## Install
-
-```bash
-$ wget "https://raw.githubusercontent.com/coderofsalvation/podi/master/podi"
-$ chmod 755 podi
-$ ./podi
-usage: 
-    init git@server:/dir/to/deploy [branch] [port] [name]   initializes a deployment 
-    recipe <name_or_url>                                    installs a recipe from podi repo or url
-```
 
 ## Docs
 
