@@ -22,7 +22,7 @@ start(){
   test -z $POD || {
     export PODI_APP=$PODI_APP
     eval "$(cat .env)"
-    verbose $POD up -d
+    verbose $POD up -d --force-recreate
     verbose $POD logs
     print ""
     print "your container(s) is running at $PODI_REMOTE:$PORT"
