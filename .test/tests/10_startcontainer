@@ -4,3 +4,5 @@ set +x
 podman build ./.test -t podi 
 podman rm -f podi
 podman run -d -p 2222:22 -p 9999:9999 -e AUTHORIZED_KEYS="$(cat ~/.ssh/*.pub)" -v $(pwd):/podi -w /home/git --name podi podi
+
+echo docker run -d --privileged --name 2WA -p 2222:22 -p 8888:80 -v $(readlink -f ~/.ssh):/root/.ssh:ro --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro --volume=$(pwd):/etc/ansible/roles/test:ro ubuntu2004-ansible

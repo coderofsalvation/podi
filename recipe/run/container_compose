@@ -31,7 +31,7 @@ start(){
 }
 
 init_runtime(){
-  test -f docker-compose || {
+  test -f docker-compose.yml || {
     generate(){ 
       echo 'version: "3.9"'
       echo 'services:'
