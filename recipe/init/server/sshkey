@@ -9,7 +9,7 @@ init_sshkey(){
     ssh-keygen -t rsa -N "" -f $key 
     ssh-key-copy -p $port -i $key $user@$server 
   }
-  print "Yay! share key '~/.ssh/id_rsa_$appname' to collaborate with devs "
+  print "Yay! share key '$server:~/.ssh/id_rsa_$appname' to collaborate with devs "
 }
 
 on init_server init_sshkey
