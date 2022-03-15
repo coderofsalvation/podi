@@ -1,5 +1,4 @@
 # info:          containerized app, nice starting point for Dockerfile + app 
-
 export POD=$(which podman || which docker || echo "")
 
 hint_systemd(){

@@ -3,6 +3,7 @@ set -e
 required="awk ssh git hostname basename"
 test -z $HOST           && host=$USER@$(hostname) || host=$HOST
 test -z "$RECIPE_REPOS" && RECIPE_REPOS="https://raw.githubusercontent.com/coderofsalvation/podi/master/recipe/index.txt"
+test -z $PODI_APP       && export PODI_APP=$(basename $(pwd))
 #trap "trigger cleanup" 0 1 2 3 6
 C_GREY="\\033[1;30m"
 C_BOLD="\\033[1;37;40m"

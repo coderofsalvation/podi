@@ -62,3 +62,4 @@ $ ./podi init git@yourserver:/home/git/myapp master
 ## Docs
 
 * [adding your own recipes](doc/recipes.md)
+* [starting podi at server boot](doc/systemd.md)
