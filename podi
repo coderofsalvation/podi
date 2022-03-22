@@ -52,11 +52,12 @@ init_post_receive(){
     export PODI_REMOTE=$2
     export PODI_USER=$3
     export PODI_PORT=$4
+    export PODI_BRANCH=$4
     export PODI_APP=$(basename $(pwd))
     export PODI_COMMIT=\$(git --work-tree=$1 --git-dir=$1/.git log -n1 --pretty=format:\"%h\")
     cd $1
     mkdir .tmp
-    git --work-tree=$1/.tmp --git-dir=$1/.git checkout -f
+    git --work-tree=$1/.tmp --git-dir=$1/.git checkout -f $PODI_BRANCH
     test -f .tmp/podi && {
       test -f podi  && rm podi
       test -d .pod && rm -rf .pod
@@ -129,7 +130,7 @@ init_server(){
   . $config 
   try silent ssh -p $port $user@$server HOST=$user@$server mkdir $gitpath
   scp -r -P $port $0 .pod $user@$server:$gitpath/. 1>/dev/null
-  try ssh -p $port $user@$server "cd $gitpath; ./podi init_gitops $gitpath $server $user $port"
+  try ssh -p $port $user@$server "cd $gitpath; ./podi init_gitops $gitpath $server $user $port $branch"
   set +e
   init_dirs 
   init_remotes 
@@ -139,7 +140,7 @@ init_server(){
   export PODI_BRANCH=$branch
 }
 
-# <path> <server> <user> <port>
+# <path> <server> <user> <port> <branch>
 init_gitops(){
   git --version 1>/dev/null 2>/dev/null || error please install git on $server 
   test -d $1 || mkdir $1
@@ -147,7 +148,7 @@ init_gitops(){
   test -d $1/.git || {
     silent git init --bare "$1/.git" || error could not create $1/.git
   }
-  init_post_receive $1 $2 $3 $4 > $1/.git/hooks/post-receive
+  init_post_receive $1 $2 $3 $4 $5 > $1/.git/hooks/post-receive
   chmod +x $1/.git/hooks/post-receive
 }
 

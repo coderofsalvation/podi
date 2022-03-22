@@ -9,5 +9,5 @@ deploy(){
 }
 
 checkout(){
-  git --work-tree=$(pwd) --git-dir=$(pwd)/.git checkout -f
+  git --work-tree=$(pwd) --git-dir=$(pwd)/.git checkout -f $PODI_BRANCH
 }
