@@ -35,3 +35,14 @@ $ systemctl enable your-container
 ```
 
 > voila..now it will persist across reboots
+
+# Example: boot all podis on boot
+
+```shell
+$ cd /root
+$ ./startpods install
+Created symlink /etc/systemd/system/multi-user.target.wants/startpods.service → /lib/systemd/system/startpods.service.
+start now? (y/n)
+```
+
+download [the script here](https://gist.github.com/coderofsalvation/d101f0b8b60d1778989866fd4546de76)
